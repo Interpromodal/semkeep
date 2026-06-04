@@ -20,7 +20,13 @@ Claude Code's built-in retrieval is **lexical**: `Grep`/`Glob` match exact strin
 | Semantic + (optional) hybrid search over **your code & local docs** | ❌ not targeted | ✅ **core** |
 | Lightweight durable per-project working notes | partial/heavy | ✅ thin scratchpad |
 
-MemPalace remembers your *chats*; Mind Palace understands your *codebase*.
+MemPalace remembers your *chats*; Mind Palace understands your *codebase*. (MemPalace has a CLI `mine` for files, but its MCP surface returns conversational memories / knowledge-graph entries — never `file:line` code results. Verified against its tool list, 2026-06-04.)
+
+### Design lessons adopted from MemPalace (validated by its benchmarks)
+- **Scoping beats tuning** — filtering the search corpus (by subtree/type) lifted MemPalace's accuracy from ~61% → ~95% R@10, more than any algorithm change. So scoped retrieval (`pathPrefix`, file-type) is **first-class** here, not an afterthought.
+- **Bundle orientation into `status`** — one call returns state *plus* a short usage protocol, cutting init overhead.
+- **Dedup on write** — `remember` rejects near-duplicate notes automatically, avoiding redundant store calls.
+- **Pluggable backends + hybrid (semantic+keyword) search** — already in this design; MemPalace's results confirm the approach.
 
 ## 2. Goals & Non-Goals
 
@@ -46,12 +52,14 @@ The server exposes these tools over stdio:
    - Returns: `{ filesIndexed, chunksAdded, chunksSkipped, embedder, elapsedMs }`.
 
 2. **`search`** — Semantic search over indexed chunks.
-   - Inputs: `query` (string), `k` (int?, default 8), `pathPrefix` (string?, restrict to a subtree), `mode` (`"semantic" | "hybrid"`?, default `"hybrid"`).
+   - Inputs: `query` (string), `k` (int?, default 8), `pathPrefix` (string?, restrict to a subtree), `ext` (string[]?, restrict by file extension), `mode` (`"semantic" | "hybrid"`?, default `"hybrid"`).
+   - Scoping is **first-class** (`pathPrefix`/`ext`): narrowing the corpus improves accuracy more than algorithm tuning. Results encourage re-querying with a tighter scope.
    - Returns: ranked `[{ file, startLine, endLine, score, snippet }]`.
 
 3. **`remember`** — Store a durable working note.
    - Inputs: `text` (string), `tags` (string[]?).
-   - Returns: `{ id }`.
+   - Semantic dedup: if a near-identical note exists (cosine > threshold), returns the existing note instead of storing a duplicate.
+   - Returns: `{ id, deduped }`.
 
 4. **`recall`** — Semantic search over stored notes.
    - Inputs: `query` (string), `k` (int?, default 5).
@@ -60,8 +68,8 @@ The server exposes these tools over stdio:
 5. **`forget`** — Delete a note by id.
    - Inputs: `id` (string). Returns `{ deleted: bool }`.
 
-6. **`status`** — Diagnostics.
-   - Returns: `{ embedder, embedderDim, degraded, chunkCount, noteCount, fileCount, dataDir }`.
+6. **`status`** — Diagnostics + orientation (one call).
+   - Returns: `{ embedder, embedderDim, degraded, chunkCount, noteCount, fileCount, dataDir, protocol }` where `protocol` is a short usage hint (when to prefer `search` over `Grep`, scoping/dimension tips) so the agent self-orients without extra calls.
 
 (Stretch, not MVP-blocking: `reindex` to drop & rebuild, `list_sources`.)
 
