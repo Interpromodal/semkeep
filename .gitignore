@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Mind Palace local data store
+.mindpalace/
+
+# Logs / env
+*.log
+.env
+.env.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
