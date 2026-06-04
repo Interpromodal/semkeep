@@ -30,6 +30,7 @@ async function ollamaReachable(fetchImpl: FetchLike, host: string): Promise<bool
 export async function detect(
   config: MindPalaceConfig,
   fetchImpl: FetchLike = fetch as unknown as FetchLike,
+  loadLocal: (model?: string) => Promise<EmbeddingProvider | null> = loadLocalEmbedder,
 ): Promise<Detection> {
   const forced = config.forced?.toLowerCase();
 
@@ -42,7 +43,7 @@ export async function detect(
     if (forced === "ollama")
       return { provider: new OllamaEmbedder(config.ollamaHost, config.model), degraded: false };
     if (forced === "local") {
-      const local = await loadLocalEmbedder(config.model);
+      const local = await loadLocal(config.model);
       if (local) return { provider: local, degraded: false };
     }
     // forced backend unavailable -> fall through to auto-detect
@@ -55,7 +56,7 @@ export async function detect(
   if (await ollamaReachable(fetchImpl, config.ollamaHost))
     return { provider: new OllamaEmbedder(config.ollamaHost, config.model), degraded: false };
 
-  const local = await loadLocalEmbedder(config.model);
+  const local = await loadLocal(config.model);
   if (local) return { provider: local, degraded: false };
 
   return { provider: new LexicalEmbedder(), degraded: true };

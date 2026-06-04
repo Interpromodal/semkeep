@@ -9,6 +9,7 @@ test("falls back to lexical when nothing is available", async () => {
     async () => {
       throw new Error("offline");
     },
+    async () => null, // simulate the local model package being absent (hermetic)
   );
   expect(provider.name).toBe("lexical");
   expect(degraded).toBe(true);
