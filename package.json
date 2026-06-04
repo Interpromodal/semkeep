@@ -1,0 +1,37 @@
+{
+  "name": "mind-palace-mcp",
+  "version": "0.1.0",
+  "description": "Local, offline-capable MCP server for semantic search over code & local docs, plus a thin durable notes scratchpad.",
+  "type": "module",
+  "bin": {
+    "mind-palace-mcp": "dist/server.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx src/server.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "mcp",
+    "semantic-search",
+    "embeddings",
+    "code-search",
+    "claude"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}
