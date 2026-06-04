@@ -135,6 +135,23 @@ export class Store {
     return this.data.notes.length < before;
   }
 
+  /** Snapshot of all notes (for re-embedding when the embedder changes). */
+  exportNotes(): Note[] {
+    return this.data.notes.map((n) => ({ ...n }));
+  }
+
+  /**
+   * Adopt a new embedder whose dimension differs from the stored one. Code
+   * chunks (and the file-hash cache) are dropped so `index_path` rebuilds them;
+   * notes are supplied already re-embedded into the new space.
+   */
+  rebuildForEmbedder(name: string, dim: number, reembeddedNotes: Note[]): void {
+    this.data.chunks = [];
+    this.data.files = {};
+    this.data.notes = reembeddedNotes;
+    this.data.meta = { embedder: name, dim, version: STORE_VERSION };
+  }
+
   stats(): { chunkCount: number; noteCount: number; fileCount: number; embedder: string; dim: number } {
     return {
       chunkCount: this.data.chunks.length,
