@@ -51,6 +51,27 @@ claude mcp add -s user mind-palace -- node /absolute/path/to/dist/server.js
 ```
 Restart Claude Code so the `mind-palace` tools load. (`-s user` makes it available in every project; use `-s local` for just one.)
 
+## Companion: auto-nudge from Grep → search
+
+`hooks/grep-nudge.mjs` is a tiny **PreToolUse hook**. When a `Grep` pattern reads like a natural-language concept query (≥3 plain words, no regex/code characters), it injects a one-line reminder to prefer `search` instead. It stays **silent** for exact strings and regex, and never blocks Grep (always exits 0). Add it to `~/.claude/settings.json` at user scope:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Grep",
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["/absolute/path/to/hooks/grep-nudge.mjs"], "timeout": 10 }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Open `/hooks` once (or restart) to activate. To disable, delete that block or manage it via `/hooks`.
+
 ## Environment variables
 
 | Var | Meaning |
