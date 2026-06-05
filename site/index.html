@@ -4,18 +4,18 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>semkeep — grep finds strings, semkeep finds meaning</title>
-<meta name="description" content="semkeep is a local, open-source MCP server that gives AI coding agents semantic + structural code intelligence: search code by meaning, jump to definitions, see who-calls-what, with an auto-fresh index and notes anchored to symbols. No API key, runs on your machine." />
+<meta name="description" content="semkeep 2.0 is a local, open-source MCP server: semantic + structural code intelligence, operational memory (verified commands that persist across sessions), and a greenlight done-gate that returns GREEN only on proof. Runs on-device. Ambient keys never touched." />
 <link rel="canonical" href="https://semkeep.com/" />
 <meta name="robots" content="index,follow,max-image-preview:large" />
 <meta name="theme-color" content="#0b0d10" />
 <meta name="author" content="semkeep" />
-<meta name="keywords" content="semkeep, MCP server, semantic code search, code intelligence, tree-sitter, AI coding agent, Claude Code, code search, embeddings, model context protocol" />
+<meta name="keywords" content="semkeep, MCP server, semantic code search, code intelligence, tree-sitter, AI coding agent, Claude Code, code search, embeddings, model context protocol, operational memory, greenlight, done gate, verified commands" />
 
 <!-- Open Graph / Twitter -->
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="semkeep" />
 <meta property="og:title" content="semkeep — grep finds strings, semkeep finds meaning" />
-<meta property="og:description" content="Local, open-source MCP server: semantic + structural code intelligence for AI agents. Search by meaning, jump to definitions, who-calls-what, auto-fresh index. No API key." />
+<meta property="og:description" content="semkeep 2.0: semantic + structural code intelligence, operational memory (verified commands persist across sessions), and a greenlight done-gate. Local, open-source MCP server. Ambient keys never touched." />
 <meta property="og:url" content="https://semkeep.com/" />
 <meta property="og:image" content="https://semkeep.com/og.svg" />
 <meta property="og:image:type" content="image/svg+xml" />
@@ -23,7 +23,7 @@
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="semkeep — grep finds strings, semkeep finds meaning" />
-<meta name="twitter:description" content="Local, open-source MCP server: semantic + structural code intelligence for AI agents. No API key." />
+<meta name="twitter:description" content="semkeep 2.0: find code by meaning, navigate structure, remember verified commands across sessions, gate done on proof. Local MCP server. Ambient keys never touched." />
 <meta name="twitter:image" content="https://semkeep.com/og.svg" />
 
 <!-- Structured data: SoftwareApplication (AEO) -->
@@ -37,16 +37,18 @@
   "operatingSystem": "Windows, macOS, Linux",
   "url": "https://semkeep.com/",
   "downloadUrl": "https://www.npmjs.com/package/semkeep",
-  "softwareVersion": "1.0.0",
+  "softwareVersion": "2.0.0",
   "license": "https://opensource.org/licenses/MIT",
-  "description": "A local, open-source Model Context Protocol (MCP) server that gives AI coding agents semantic and structural code intelligence: search code by meaning, jump to definitions, find call sites, map imports, with an auto-refreshing index and notes anchored to symbols. Runs on-device with no API key required.",
+  "description": "A local, open-source Model Context Protocol (MCP) server and project companion for AI coding agents. Offers semantic + structural code intelligence (search by meaning, definitions, callers, imports), operational memory (verified recipes, gotchas, and dead-ends that persist across sessions with staleness detection), and a greenlight verification gate that returns GREEN only when all done-checks pass. Runs on-device; ambient API keys are never read by default.",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "featureList": [
     "Semantic code search (find by meaning, not exact string)",
     "Structural intelligence: define, callers, outline, imports (tree-sitter)",
     "Auto-fresh index: reflects edits, additions, and deletions on query",
+    "Operational memory: mark/markers/unmark — typed, verified records (recipes, gotchas, dead-ends) that persist across sessions; recipes go STALE after 30 days",
+    "Greenlight verification gate: greenlight_run/greenlight_lint — returns GREEN only when all checks prove completion; lint flags shallow gates",
     "Notes anchored to symbols",
-    "Local and offline-capable; no API key required"
+    "Local and on-device; ambient API keys (OPENAI_API_KEY etc.) are never read by default"
   ]
 }
 </script>
@@ -58,21 +60,25 @@
   "@type": "FAQPage",
   "mainEntity": [
     { "@type": "Question", "name": "What is semkeep?",
-      "acceptedAnswer": { "@type": "Answer", "text": "semkeep is a local, open-source MCP (Model Context Protocol) server that gives AI coding agents semantic and structural understanding of a codebase. It lets an agent search code by meaning, jump to where a symbol is defined, find who calls it, map a file's imports, and keep durable notes anchored to symbols." } },
+      "acceptedAnswer": { "@type": "Answer", "text": "semkeep is a local, open-source MCP (Model Context Protocol) server and project companion for AI coding agents. It has 16 tools across four capabilities: (1) semantic + structural code intelligence — search code by meaning, jump to definitions, find callers, map imports; (2) operational memory — mark/markers/unmark lets you record verified recipes (commands with exit codes), gotchas, and dead-ends that persist across sessions, with STALE warnings after 30 days; (3) greenlight verification — a done-gate that returns GREEN only when all checks prove completion, with a lint mode to catch shallow gates; and (4) durable notes anchored to symbols." } },
     { "@type": "Question", "name": "How is semkeep different from grep or ripgrep?",
       "acceptedAnswer": { "@type": "Answer", "text": "grep matches exact strings and regex. semkeep matches by meaning ('where is the retry logic?' finds backoffScheduler even if those words never appear) and by structure (jump to a definition, list call sites). It is a complement to grep, not a replacement: use grep for exact strings, semkeep when you do not know the exact term or need code relationships." } },
     { "@type": "Question", "name": "Is my code sent anywhere?",
-      "acceptedAnswer": { "@type": "Answer", "text": "By default, no — semkeep embeds and indexes on your machine with a bundled local model, so your code stays on your computer. One important exception: semkeep auto-detects embedding backends, so if you or another tool have set OPENAI_API_KEY or VOYAGE_API_KEY in your environment, semkeep will use that API automatically, sending code chunks to that provider (and incurring small embedding costs). To guarantee fully-local operation, set SEMKEEP_EMBEDDER=local for the bundled on-device model, or SEMKEEP_EMBEDDER=lexical for a zero-dependency offline fallback; a local Ollama backend also keeps everything on your machine. The status tool always reports which backend is active." } },
+      "acceptedAnswer": { "@type": "Answer", "text": "By default, no. semkeep does NOT read your ambient OPENAI_API_KEY or VOYAGE_API_KEY. It uses its own scoped SEMKEEP_OPENAI_API_KEY and SEMKEEP_VOYAGE_API_KEY (set in the MCP server's own env block), or credentials in ~/.semkeep/config.json. Without those, the default is a bundled local on-device model — your code stays on your machine and your ambient keys are never touched. If you want semkeep to inherit your ambient keys, opt in explicitly with SEMKEEP_INHERIT_ENV_KEYS=1. The status tool always reports which backend is active." } },
     { "@type": "Question", "name": "Does semkeep need an API key?",
-      "acceptedAnswer": { "@type": "Answer", "text": "No. semkeep auto-detects the best available embedding backend in order: an API key if you have one, a local Ollama server, a bundled on-device model, and finally a deterministic lexical fallback that always works offline. It runs with zero configuration and no API key." } },
+      "acceptedAnswer": { "@type": "Answer", "text": "No. The default is a bundled local on-device model that requires no API key. For API-quality embeddings, set SEMKEEP_OPENAI_API_KEY (or SEMKEEP_VOYAGE_API_KEY) in the MCP server's env block — semkeep will never read your ambient OPENAI_API_KEY unless you set SEMKEEP_INHERIT_ENV_KEYS=1. A local Ollama server and a deterministic lexical fallback are also available." } },
     { "@type": "Question", "name": "How do I choose the embedding model or provider?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Two environment variables control it. SEMKEEP_EMBEDDER forces a backend (local, openai, voyage, ollama, or lexical) and overrides auto-detection. SEMKEEP_MODEL overrides the model name for that backend — for example SEMKEEP_EMBEDDER=openai with SEMKEEP_MODEL=text-embedding-3-large (the OpenAI default is text-embedding-3-small). When no backend is forced, precedence is OPENAI_API_KEY, then VOYAGE_API_KEY, then a reachable Ollama, then the bundled on-device model, then the lexical fallback. In semkeep's published benchmark a stronger embedding model improved semantic-search accuracy substantially, but the biggest model was not always the best, so it is worth testing models on your own codebase." } },
+      "acceptedAnswer": { "@type": "Answer", "text": "Two environment variables control it. SEMKEEP_EMBEDDER forces a backend (local, openai, voyage, ollama, or lexical) and overrides auto-detection. SEMKEEP_MODEL overrides the model name for that backend — for example SEMKEEP_EMBEDDER=openai with SEMKEEP_MODEL=text-embedding-3-large (the OpenAI default is text-embedding-3-small). Set SEMKEEP_OPENAI_API_KEY in the MCP server's own env block; semkeep will not read your ambient OPENAI_API_KEY by default. In semkeep's published benchmark a stronger embedding model improved semantic-search accuracy substantially, but the biggest model was not always the best, so it is worth testing models on your own codebase." } },
+    { "@type": "Question", "name": "Can semkeep remember verified commands across sessions?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Operational memory is a core 2.0 feature. Use the mark tool to record typed, verified records: recipes (a command plus its expected exit code), gotchas (things to watch out for), dead-ends (approaches that failed), or plain notes. Recipes are automatically flagged STALE after 30 days to prompt re-verification. Use markers to list everything recorded for the current project. Records persist across sessions and are surfaced automatically at session start via the SessionStart and PreCompact hooks (semkeep markers --hook and semkeep nudge --hook)." } },
+    { "@type": "Question", "name": "What is the greenlight verification gate?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Greenlight is a JSON definition-of-done gate. You define a spec (a JSON file listing checks — tests, lint, build steps, assertions) and run semkeep greenlight run <spec.json>. It returns GREEN only when every check passes and proves completion; a partial or trivially-passing check set does not satisfy it. greenlight_lint audits your spec for shallow gates — checks that would pass without actually proving anything, like an assertion that always succeeds. Use it to enforce a rigorous, reproducible standard of done." } },
     { "@type": "Question", "name": "Which languages does semkeep support?",
       "acceptedAnswer": { "@type": "Answer", "text": "Structural features (define, callers, outline, imports, symbol-aware chunking) support TypeScript, JavaScript, TSX, and JSX today, with the parser designed to add more languages easily. Semantic search works over any text file, including docs and Markdown." } },
     { "@type": "Question", "name": "How does the index stay fresh?",
       "acceptedAnswer": { "@type": "Answer", "text": "semkeep keeps itself current with lazy freshen-on-query: before each code query it does a fast file-stat scan of the indexed folders, re-embeds changed files, indexes new ones, and prunes deleted ones. You never have to manually re-index after editing." } },
     { "@type": "Question", "name": "What is MCP (Model Context Protocol)?",
-      "acceptedAnswer": { "@type": "Answer", "text": "MCP is an open standard for connecting AI assistants to tools and data sources. An MCP server like semkeep exposes tools (search, define, callers, and more) that an MCP-compatible agent such as Claude Code can call. semkeep installs as an MCP server or a Claude Code plugin." } },
+      "acceptedAnswer": { "@type": "Answer", "text": "MCP is an open standard for connecting AI assistants to tools and data sources. An MCP server like semkeep exposes tools (search, define, callers, greenlight, mark, and more) that an MCP-compatible agent such as Claude Code can call. semkeep installs as an MCP server or a Claude Code plugin." } },
     { "@type": "Question", "name": "Is semkeep free?",
       "acceptedAnswer": { "@type": "Answer", "text": "Yes. semkeep is free and MIT-licensed. If it saves you time, there is an optional tip jar to help fund development and future tools." } },
     { "@type": "Question", "name": "How do I install semkeep?",
@@ -211,9 +217,9 @@
 <main id="main">
 <section class="hero" style="border-top:0">
   <div class="wrap">
-    <span class="eyebrow">◆ MCP server · local · open source</span>
+    <span class="eyebrow">◆ MCP server · local · open source · v2.0</span>
     <h1>grep finds strings.<br><span class="sub">semkeep finds meaning.</span></h1>
-    <p class="lede">Semantic <strong>and</strong> structural code intelligence for your AI coding agent. Search code by intent, jump to definitions, see who‑calls‑what — with an index that keeps itself fresh. Runs locally. No API key.</p>
+    <p class="lede">Your AI agent's project companion: find code by meaning, navigate by structure, <strong>remember verified commands across sessions</strong>, and gate "done" on proof — not hope. Runs locally. Ambient API keys never touched.</p>
     <div class="cta">
       <a class="btn btn-gold" href="#install">Get started</a>
       <a class="btn btn-ghost" href="#compare">How it compares</a>
@@ -229,13 +235,13 @@
 <section id="features">
   <div class="wrap">
     <div class="kicker">What it does</div>
-    <h2>Four ways to know your codebase</h2>
-    <p class="section-lede">Built on the same insight, four times over: an agent shouldn't have to know the exact identifier to find the right code.</p>
+    <h2>16 tools. Four capabilities.</h2>
+    <p class="section-lede">A project companion that finds code by meaning, navigates by structure, remembers verified commands across sessions, and gates "done" on proof.</p>
     <div class="grid">
       <div class="card">
-        <span class="ic">search</span>
+        <span class="ic">search · freshness</span>
         <h3>Find by meaning</h3>
-        <p>Ask "where's the retry logic?" and get the function that defines <span class="mono gold">backoffScheduler</span> — even though none of those words appear in it. Semantic search over code and docs.</p>
+        <p>Ask "where's the retry logic?" and get the function that defines <span class="mono gold">backoffScheduler</span> — even though none of those words appear in it. Semantic search over code and docs, index always current.</p>
       </div>
       <div class="card">
         <span class="ic">define · callers · outline · imports</span>
@@ -243,9 +249,14 @@
         <p>Real tree‑sitter ASTs. Jump to where a symbol is defined, list every call site, see a file's shape, map its dependency edges — answers grep simply can't give.</p>
       </div>
       <div class="card">
-        <span class="ic">freshness</span>
-        <h3>Always fresh</h3>
-        <p>Edit, add, or delete files and just keep working. semkeep re‑indexes changed files and prunes deleted ones automatically on your next query. No manual re‑index, ever.</p>
+        <span class="ic">mark · markers · unmark</span>
+        <h3>Operational memory</h3>
+        <p>Record <em>recipes</em> (verified commands with exit codes), <em>gotchas</em>, and <em>dead‑ends</em> that persist across sessions. Recipes go <span class="mono gold">⚠ STALE</span> after 30 days. Surfaced automatically at session start.</p>
+      </div>
+      <div class="card">
+        <span class="ic">greenlight_run · greenlight_lint</span>
+        <h3>Verification gate</h3>
+        <p>Define your done‑criteria in a JSON spec. <span class="mono gold">greenlight_run</span> returns GREEN only when every check proves completion. <span class="mono gold">greenlight_lint</span> flags shallow gates that would pass without proving anything.</p>
       </div>
       <div class="card">
         <span class="ic">remember · recall</span>
@@ -330,7 +341,19 @@ client/streamableHttp.js:249
         <h3>Index, then ask</h3>
         <pre>index_path  ./src
 search      "where is the websocket reconnect logic"</pre>
-        <p>Embeddings auto‑detect: API key → local Ollama → on‑device model → lexical fallback. The default on‑device model keeps your code on your machine — note it will auto‑use <span class="mono">OPENAI_API_KEY</span> if your environment has one; set <span class="mono">SEMKEEP_EMBEDDER=local</span> to force fully local.</p>
+        <p><strong>Credentials &amp; privacy:</strong> the default is a bundled local on-device model — your code stays on your machine and your ambient <span class="mono">OPENAI_API_KEY</span> is <em>never</em> read. For API-quality embeddings, add <span class="mono">SEMKEEP_OPENAI_API_KEY</span> to the MCP server's own <span class="mono">env</span> block in your MCP config. Opt into ambient key inheritance with <span class="mono">SEMKEEP_INHERIT_ENV_KEYS=1</span>.</p>
+      </li>
+      <li>
+        <h3>Operational memory — surface at session start</h3>
+        <pre># Add to your Claude Code hooks (settings.json):
+# SessionStart hook:   semkeep markers --hook
+# PreCompact hook:     semkeep nudge --hook</pre>
+        <p>Once hooked, recorded recipes, gotchas, and dead-ends appear automatically at the top of every new session and before compaction. Use <span class="mono">mark</span> in-agent to record them; recipes go <span class="mono gold">⚠ STALE</span> after 30 days.</p>
+      </li>
+      <li>
+        <h3>Verification gate — run from the CLI</h3>
+        <pre>semkeep greenlight run spec.json</pre>
+        <p>Define your done-criteria in a JSON spec, then run the gate from the CLI or call <span class="mono">greenlight_run</span> in-agent. Returns GREEN only on proof. Use <span class="mono">greenlight_lint</span> to audit your spec for shallow checks first.</p>
       </li>
     </ol>
   </div>

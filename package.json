@@ -1,6 +1,6 @@
 {
   "name": "semkeep",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Semantic + structural code intelligence for AI agents, as a local MCP server: find code by meaning, jump to definitions, see who-calls-what, with auto-fresh indexing and notes anchored to symbols. Offline-capable, no API key.",
   "type": "module",
   "homepage": "https://semkeep.com",

@@ -1,8 +1,8 @@
 {
   "name": "semkeep",
   "displayName": "semkeep",
-  "version": "1.0.0",
-  "description": "Semantic + structural code intelligence for AI agents: find code by meaning, jump to definitions, see who-calls-what, with auto-fresh indexing and notes anchored to symbols. Local, offline-capable, no API key required.",
+  "version": "2.0.0",
+  "description": "The project companion for AI coding agents: semantic + structural code intelligence, operational memory (verified recipes/gotchas that persist across sessions), and a greenlight done-gate that returns GREEN only on proof. Local, offline-capable; ambient API keys never touched.",
   "author": {
     "name": "John",
     "email": "john@buildreach.com",
@@ -18,6 +18,9 @@
     "code-intelligence",
     "tree-sitter",
     "embeddings",
+    "operational-memory",
+    "greenlight",
+    "verification",
     "claude"
   ],
   "mcpServers": {

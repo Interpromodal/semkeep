@@ -5,16 +5,16 @@
     "email": "john@buildreach.com",
     "url": "https://semkeep.com"
   },
-  "description": "semkeep — semantic + structural code intelligence for AI agents, as a local MCP server.",
+  "description": "semkeep — the project companion for AI coding agents: code intelligence, operational memory, and a greenlight done-gate, as a local MCP server.",
   "plugins": [
     {
       "name": "semkeep",
       "source": "./",
-      "description": "Find code by meaning, jump to definitions, see who-calls-what, auto-fresh index, and notes anchored to symbols. Local, offline-capable, no API key. Bundles a Grep nudge hook.",
-      "version": "1.0.0",
+      "description": "Code intelligence (search by meaning, definitions, callers, imports), operational memory (verified recipes/gotchas/dead-ends that persist across sessions), and greenlight done-gates. Local, offline-capable; ambient API keys never touched. Bundles a Grep nudge hook.",
+      "version": "2.0.0",
       "homepage": "https://semkeep.com",
       "license": "MIT",
-      "keywords": ["mcp", "semantic-search", "code-search", "claude"]
+      "keywords": ["mcp", "semantic-search", "code-search", "operational-memory", "greenlight", "claude"]
     }
   ]
 }
