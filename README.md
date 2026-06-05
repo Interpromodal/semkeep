@@ -1,6 +1,8 @@
 # semkeep
 
-A local, offline-capable [MCP](https://modelcontextprotocol.io) server that gives an AI coding agent **semantic + structural intelligence** about your codebase — plus durable notes anchored to your code. Site: **[semkeep.com](https://semkeep.com)**.
+A local, offline-capable [MCP](https://modelcontextprotocol.io) server that gives an AI coding agent **semantic + structural intelligence** about your codebase — plus durable notes anchored to your code, operational memory across sessions, and a definition-of-done verification gate. Site: **[semkeep.com](https://semkeep.com)**.
+
+semkeep absorbs two formerly-separate MCP servers: **cairn** (operational memory) and **greenlight** (verification gates) — one install, one server, 16 tools.
 
 Built-in `Grep`/`Glob` are *lexical* — they only match exact strings. semkeep adds the four things agents are missing:
 
@@ -14,6 +16,8 @@ Runs on your machine. No API key required.
 > **Why not MemPalace?** [MemPalace](https://github.com/mempalace/mempalace) is excellent at *conversational* memory (remembering your chats). semkeep is the complement: it understands your *codebase*. They don't overlap.
 
 ## What it does
+
+**Code intelligence**
 
 | Tool | Purpose |
 |---|---|
@@ -29,20 +33,35 @@ Runs on your machine. No API key required.
 | `refresh` | Force the index to re-scan its roots (index new/changed, prune deleted). |
 | `status` | Embedding backend, index/structure stats, roots, and a usage protocol. |
 
+**Operational memory**
+
+| Tool | Purpose |
+|---|---|
+| `mark` | Record a typed project marker: `recipe` (verified command), `gotcha` (problem + resolution), `deadend` (failed approach), or `note`. Upserts by (kind, title). |
+| `markers` | Recall this project's markers, grouped by kind, STALE-flagged. Filter by kind or substring query. |
+| `unmark` | Delete a marker by id. |
+
+**Verification**
+
+| Tool | Purpose |
+|---|---|
+| `greenlight_run` | Run a JSON definition-of-done gate: execute a spec's checks and assert results (exit codes, stdout/stderr patterns, file checks, `json_path`, etc.). Returns GREEN only if all required checks pass. |
+| `greenlight_lint` | Statically flag "shallow gates" — checks that would pass without proving anything. Runs nothing. |
+
 The five code/structure tools (`search`, `define`, `callers`, `outline`, `imports`) **auto-freshen** before answering — edit your code and just query; the index updates itself.
 
 ## Never hard-fails: tiered embeddings
 
 On startup it auto-selects the best **available** embedding backend and reports it via `status`:
 
-1. `OPENAI_API_KEY` / `VOYAGE_API_KEY` → API embeddings (best quality)
+1. `SEMKEEP_OPENAI_API_KEY` / `SEMKEEP_VOYAGE_API_KEY` (or `~/.semkeep/config.json`) → API embeddings (best quality)
 2. A reachable **Ollama** (`OLLAMA_HOST`, default `http://localhost:11434`, `nomic-embed-text`)
 3. A bundled **local model** (`@huggingface/transformers`, all-MiniLM, no key) — *only if you install it* (see below)
 4. **Lexical fallback** — deterministic, dependency-free, always works (`status` reports `degraded`)
 
 So it runs anywhere with zero config, and silently upgrades quality the moment a better backend appears.
 
-> **⚠️ API keys are used automatically.** Because detection prefers an API backend first, if `OPENAI_API_KEY` or `VOYAGE_API_KEY` is present in your environment (e.g. exported globally for another tool, or sitting in a loaded `.env`), semkeep will use it — sending code chunks to that provider and incurring small embedding costs. To force fully-local embeddings regardless, set `SEMKEEP_EMBEDDER=local` (bundled model) or `SEMKEEP_EMBEDDER=lexical` (zero-dependency). `status` always reports the active backend.
+> **Credential isolation — your machine-wide API keys are never touched by default.** semkeep does NOT read the ambient `OPENAI_API_KEY` or `VOYAGE_API_KEY` from your environment. It reads only `SEMKEEP_OPENAI_API_KEY` / `SEMKEEP_VOYAGE_API_KEY` (set in semkeep's own MCP-server `env` block) or a `~/.semkeep/config.json` file (`{"openaiKey":"…","voyageKey":"…"}`). The default is the on-device local model — no key, no cost, no data leaves your machine. To opt into ambient keys explicitly, set `SEMKEEP_INHERIT_ENV_KEYS=1`. To force a specific provider, set `SEMKEEP_EMBEDDER=openai|voyage|local|lexical`. `status` always reports the active backend.
 
 ### Optional: enable the local semantic model (no API key)
 ```bash
@@ -101,12 +120,74 @@ Restart Claude Code so the `semkeep` tools load. Requires Node.js 18+. (`-s user
 
 Open `/hooks` once (or restart) to activate. To disable, delete that block or manage it via `/hooks`.
 
+## Operational memory
+
+Markers are typed, per-project records that survive across sessions. They live in a **global, project-keyed store** at `~/.semkeep/operational.json` (override with `SEMKEEP_OPS_STORE`), separate from the code index — so the SessionStart hook reads them fast and they survive independently of any `index_path` work.
+
+At the start of each session the `markers --hook` output surfaces verified recipes, gotchas, and dead-ends a past session left behind.
+
+```jsonc
+// Mark a verified build command (exitCode 0 stamps it verified; stale after 30 days)
+{ "kind": "recipe", "title": "run tests", "command": "npm test", "cwd": "/my/project", "exitCode": 0 }
+
+// Mark a gotcha
+{ "kind": "gotcha", "title": "vitest config", "problem": "vite.config.ts not picked up", "resolution": "rename to vitest.config.ts" }
+```
+
+Kinds: `recipe` | `gotcha` | `deadend` | `note`. Upserts by (kind, title).
+
+## Verification (greenlight)
+
+A **greenlight gate** is a JSON spec (`greenlight.json` at repo root by convention) that defines a set of checks; `greenlight_run` executes them and returns GREEN only if all required checks pass. Use it to lock down your definition of done.
+
+```jsonc
+// greenlight.json — minimal project gate
+{
+  "checks": [
+    { "id": "build",  "run": "npm run build", "expect": { "exitCode": 0 } },
+    { "id": "tests",  "run": "npm test",       "expect": { "exitCode": 0 } },
+    { "id": "types",  "run": "npx tsc --noEmit","expect": { "exitCode": 0 } }
+  ]
+}
+```
+
+`greenlight_lint` statically flags shallow gates (checks that would pass even if the command does nothing useful) without running anything.
+
+## CLI
+
+`semkeep` is a dispatcher. Bare invocation (`npx -y semkeep`) starts the MCP server — unchanged. Subcommands:
+
+| Subcommand | Used as | Purpose |
+|---|---|---|
+| `semkeep markers --hook` | SessionStart hook | Print this project's operational markers at session start |
+| `semkeep nudge --hook` | PreCompact hook | Emit a reminder to preserve key context before compaction |
+| `semkeep greenlight run [--spec <path>]` | CLI / CI | Run the greenlight gate (defaults to `./greenlight.json`) |
+| `semkeep greenlight lint [--spec <path>]` | CLI | Lint the gate spec for shallow checks |
+| `semkeep greenlight init` | CLI | Scaffold a starter `greenlight.json` in the current directory |
+| `semkeep import-cairn` | One-time migration | Import markers from a cairn store into the semkeep operational store |
+
+Register the SessionStart and PreCompact hooks in `~/.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "SessionStart":  [{ "hooks": [{ "type": "command", "command": "npx", "args": ["-y", "semkeep", "markers", "--hook"] }] }],
+    "PreCompact":    [{ "hooks": [{ "type": "command", "command": "npx", "args": ["-y", "semkeep", "nudge",   "--hook"] }] }]
+  }
+}
+```
+
 ## Environment variables
 
 | Var | Meaning |
 |---|---|
-| `SEMKEEP_DATA_DIR` | Where the JSON store lives (default `<cwd>/.semkeep`) |
-| `OPENAI_API_KEY` / `VOYAGE_API_KEY` | Use an API embedding backend |
+| `SEMKEEP_DATA_DIR` | Where the per-project code/notes store lives (default `<cwd>/.semkeep`) |
+| `SEMKEEP_OPS_STORE` | Override path for the global operational markers store (default `~/.semkeep/operational.json`) |
+| `SEMKEEP_PROJECT` | Override the project key used to scope operational markers (default: `cwd`) |
+| `SEMKEEP_OPENAI_API_KEY` | OpenAI API key for semkeep only (preferred over ambient key) |
+| `SEMKEEP_VOYAGE_API_KEY` | Voyage AI key for semkeep only (preferred over ambient key) |
+| `SEMKEEP_INHERIT_ENV_KEYS` | Set `1` to allow semkeep to fall back to ambient `OPENAI_API_KEY` / `VOYAGE_API_KEY` |
+| `OPENAI_API_KEY` / `VOYAGE_API_KEY` | Ambient keys — only consulted if `SEMKEEP_INHERIT_ENV_KEYS=1` |
 | `OLLAMA_HOST` | Ollama base URL (default `http://localhost:11434`) |
 | `SEMKEEP_EMBEDDER` | Force a backend: `lexical` \| `openai` \| `voyage` \| `ollama` \| `local` |
 | `SEMKEEP_MODEL` | Override the model for the chosen backend (e.g. `text-embedding-3-large`, `text-embedding-3-small`, `voyage-3`, `nomic-embed-text`) |
@@ -118,12 +199,12 @@ Open `/hooks` once (or restart) to activate. To disable, delete that block or ma
 Detection is automatic, but you can pin it explicitly:
 
 ```bash
-# Force fully-local (bundled on-device model) even if an API key is present
+# Force fully-local (bundled on-device model) — default, no key needed
 SEMKEEP_EMBEDDER=local
 
-# Use OpenAI with the strongest model
+# Use OpenAI with the strongest model (key isolated to semkeep)
 SEMKEEP_EMBEDDER=openai
-OPENAI_API_KEY=sk-...
+SEMKEEP_OPENAI_API_KEY=sk-...
 SEMKEEP_MODEL=text-embedding-3-large    # default is text-embedding-3-small
 ```
 
