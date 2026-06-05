@@ -11,6 +11,7 @@ import {
   importsTool,
   indexPathTool,
   outlineTool,
+  rememberTool,
 } from "../src/tools.js";
 
 async function makeCtx(): Promise<Context> {
@@ -62,4 +63,21 @@ test("auto-freshen reflects a deleted file on the next query", async () => {
   // next query auto-freshens (autoRefresh on, debounce 0) -> prunes the deleted file
   expect(await defineTool(c, { name: "removed" })).toContain("No definition");
   expect(await defineTool(c, { name: "kept" })).toContain("keep.ts");
+});
+
+test("a note anchored to a symbol surfaces in define and outline", async () => {
+  const c = await makeCtx();
+  const repo = mkdtempSync(join(tmpdir(), "mp-na-repo-"));
+  writeFileSync(join(repo, "net.ts"), "export function backoffScheduler(){ return 1 }\n");
+  await indexPathTool(c, { path: repo });
+  await rememberTool(c, { text: "retry path drops events under load", symbol: "backoffScheduler" });
+
+  const def = await defineTool(c, { name: "backoffScheduler" });
+  expect(def).toContain("retry path drops events");
+
+  const out = await outlineTool(c, { path: join(repo, "net.ts") });
+  expect(out).toContain("retry path drops events"); // surfaced via symbol-in-file
+
+  const other = await defineTool(c, { name: "nonexistent" });
+  expect(other).not.toContain("retry path");
 });

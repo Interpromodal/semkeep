@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import type { EmbeddingProvider } from "./types.js";
+import type { EmbeddingProvider, Note } from "./types.js";
 import type { SemkeepConfig } from "./config.js";
 import { Store } from "./store.js";
 import { indexPath } from "./indexer.js";
@@ -30,6 +30,17 @@ export async function maybeFreshen(ctx: Context): Promise<void> {
   lastFreshenAt = now;
   const r = await freshen(ctx.store, ctx.embedder);
   if (r.added || r.reindexed || r.pruned) await ctx.store.save();
+}
+
+/** Render an anchored-notes block to append under define/outline output. */
+function formatNotes(notes: Note[]): string {
+  if (!notes.length) return "";
+  return (
+    "\n\nNotes:\n" +
+    notes
+      .map((n) => `  • ${n.text}${n.tags.length ? ` [${n.tags.join(", ")}]` : ""} (${n.id})`)
+      .join("\n")
+  );
 }
 
 /** Force an index refresh now (bypasses the debounce). */
@@ -105,12 +116,19 @@ export async function searchTool(
 
 export async function rememberTool(
   ctx: Context,
-  args: { text: string; tags?: string[] },
+  args: { text: string; tags?: string[]; symbol?: string; file?: string },
 ): Promise<string> {
+  const anchor =
+    args.symbol || args.file
+      ? { symbol: args.symbol, file: args.file ? resolve(args.file) : undefined }
+      : undefined;
   const [v] = await ctx.embedder.embed([args.text]);
-  const r = ctx.store.addNote(args.text, args.tags ?? [], Array.from(v));
+  const r = ctx.store.addNote(args.text, args.tags ?? [], Array.from(v), anchor);
   await ctx.store.save();
-  return r.deduped ? `Already remembered (deduped) as ${r.id}.` : `Remembered as ${r.id}.`;
+  const where = anchor
+    ? ` (anchored to ${[anchor.symbol ? "@" + anchor.symbol : "", anchor.file ?? ""].filter(Boolean).join(" ")})`
+    : "";
+  return (r.deduped ? `Already remembered (deduped) as ${r.id}` : `Remembered as ${r.id}`) + where + ".";
 }
 
 export async function recallTool(
@@ -123,7 +141,12 @@ export async function recallTool(
   return hits
     .map((h) => {
       const tags = h.tags.length ? ` [${h.tags.join(", ")}]` : "";
-      return `${h.id} (score ${h.score.toFixed(3)})${tags}\n    ${h.text}`;
+      const anchor = h.anchor?.symbol
+        ? ` ↳ @${h.anchor.symbol}`
+        : h.anchor?.file
+          ? ` ↳ ${h.anchor.file}`
+          : "";
+      return `${h.id} (score ${h.score.toFixed(3)})${tags}${anchor}\n    ${h.text}`;
     })
     .join("\n\n");
 }
@@ -154,15 +177,22 @@ export async function outlineTool(ctx: Context, args: { path: string }): Promise
   await maybeFreshen(ctx);
   const file = resolve(args.path);
   const syms = ctx.store.outline(file);
-  if (!syms.length) return `No symbols for ${file} (not indexed, or no parseable code).`;
-  return syms
-    .map((s) => {
-      const indent = s.container ? "    " : "  ";
-      const exp = s.exported ? "export " : "";
-      const qual = s.container ? `${s.container}.` : "";
-      return `${indent}${exp}${s.kind} ${qual}${s.name}  (${s.startLine}-${s.endLine})`;
-    })
-    .join("\n");
+  const noteBlock = formatNotes(ctx.store.notesForFile(file, syms.map((s) => s.name)));
+  if (!syms.length) {
+    return noteBlock
+      ? `No symbols for ${file}.${noteBlock}`
+      : `No symbols for ${file} (not indexed, or no parseable code).`;
+  }
+  return (
+    syms
+      .map((s) => {
+        const indent = s.container ? "    " : "  ";
+        const exp = s.exported ? "export " : "";
+        const qual = s.container ? `${s.container}.` : "";
+        return `${indent}${exp}${s.kind} ${qual}${s.name}  (${s.startLine}-${s.endLine})`;
+      })
+      .join("\n") + noteBlock
+  );
 }
 
 export async function defineTool(
@@ -171,13 +201,16 @@ export async function defineTool(
 ): Promise<string> {
   await maybeFreshen(ctx);
   const defs = ctx.store.findDefinitions(args.name, args.pathPrefix);
-  if (!defs.length) return `No definition found for "${args.name}".`;
-  return defs
-    .map((s) => {
-      const sig = s.signature ? `\n    ${s.signature}` : "";
-      return `${s.file}:${s.startLine}  ${s.exported ? "export " : ""}${s.kind} ${s.name}${sig}`;
-    })
-    .join("\n\n");
+  const noteBlock = formatNotes(ctx.store.notesForSymbol(args.name));
+  if (!defs.length) return `No definition found for "${args.name}".${noteBlock}`;
+  return (
+    defs
+      .map((s) => {
+        const sig = s.signature ? `\n    ${s.signature}` : "";
+        return `${s.file}:${s.startLine}  ${s.exported ? "export " : ""}${s.kind} ${s.name}${sig}`;
+      })
+      .join("\n\n") + noteBlock
+  );
 }
 
 export async function callersTool(
