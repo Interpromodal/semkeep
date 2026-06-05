@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "echo \"semkeep.com is a static site — no install\"",
+  "buildCommand": "echo \"semkeep.com is a static site — no build\"",
+  "outputDirectory": "site",
+  "cleanUrls": true
+}

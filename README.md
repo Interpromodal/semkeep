@@ -66,7 +66,7 @@ claude mcp add -s user semkeep -- npx -y semkeep
 
 **…or as a Claude Code plugin** (bundles the server + the Grep nudge hook in one install):
 ```bash
-/plugin marketplace add <your-github>/semkeep
+/plugin marketplace add Interpromodal/semkeep
 /plugin install semkeep@semkeep
 ```
 

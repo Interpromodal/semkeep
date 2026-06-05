@@ -9,6 +9,7 @@
     "url": "https://semkeep.com"
   },
   "homepage": "https://semkeep.com",
+  "repository": "https://github.com/Interpromodal/semkeep",
   "license": "MIT",
   "keywords": [
     "mcp",

@@ -6,6 +6,13 @@
   "homepage": "https://semkeep.com",
   "author": "John <john@buildreach.com> (https://semkeep.com)",
   "funding": "https://venmo.com/u/InsertCoin",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Interpromodal/semkeep.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Interpromodal/semkeep/issues"
+  },
   "bin": {
     "semkeep": "dist/server.js"
   },
