@@ -10,6 +10,8 @@ export interface SearchOptions {
 }
 
 const KEYWORD_WEIGHT = 0.3;
+const DEFINITION_WEIGHT = 0.25;
+const DEFINITION_KINDS = new Set(["function", "class", "method", "interface", "type", "enum"]);
 
 /**
  * Semantic search over indexed chunks. In "hybrid" mode (default) a small
@@ -53,6 +55,17 @@ export async function search(
     let shared = 0;
     for (const t of qTokens) if (cTokens.has(t)) shared++;
     c.score += (shared / qTokens.size) * KEYWORD_WEIGHT;
+
+    // Definition boost: a chunk that DEFINES a symbol whose name matches the
+    // query is far more likely the real answer than a chunk that merely uses it.
+    if (c.kind && DEFINITION_KINDS.has(c.kind) && c.symbolName) {
+      const symTokens = tokenize(c.symbolName);
+      let symShared = 0;
+      for (const t of symTokens) if (qTokens.has(t)) symShared++;
+      if (symShared > 0) {
+        c.score += DEFINITION_WEIGHT * (symShared / Math.max(1, symTokens.length));
+      }
+    }
   }
   candidates.sort((a, b) => b.score - a.score);
   return candidates.slice(0, k).map(strip);

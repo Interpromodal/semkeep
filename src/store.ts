@@ -1,10 +1,19 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
-import type { Chunk, CodeSymbol, ImportEdge, Note, Reference, SearchHit, StoreData } from "./types.js";
+import type {
+  Chunk,
+  CodeSymbol,
+  ImportEdge,
+  Note,
+  Reference,
+  SearchHit,
+  StoreData,
+  SymbolKind,
+} from "./types.js";
 
-/** A scored chunk that still carries its full text (for hybrid re-ranking). */
-export type ScoredChunk = SearchHit & { text: string };
+/** A scored chunk that still carries its full text + symbol tags (for re-rank). */
+export type ScoredChunk = SearchHit & { text: string; symbolName?: string; kind?: SymbolKind };
 
 const STORE_VERSION = 1;
 const DEFAULT_DEDUP_THRESHOLD = 0.97;
@@ -181,6 +190,8 @@ export class Store {
         score: dot(q, c.vector),
         snippet: snippetOf(c.text),
         text: c.text,
+        symbolName: c.symbolName,
+        kind: c.kind,
       }))
       .sort((a, b) => b.score - a.score)
       .slice(0, k);
