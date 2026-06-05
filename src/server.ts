@@ -34,7 +34,7 @@ function getContext(): Promise<Context> {
 
 const text = (t: string) => ({ content: [{ type: "text" as const, text: t }] });
 
-const server = new McpServer({ name: "mind-palace", version: "0.1.0" });
+const server = new McpServer({ name: "semkeep", version: "0.1.0" });
 
 server.registerTool(
   "index_path",
@@ -114,10 +114,10 @@ server.registerTool(
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("[mind-palace] MCP server ready on stdio");
+  console.error("[semkeep] MCP server ready on stdio");
 }
 
 main().catch((e) => {
-  console.error("[mind-palace] fatal:", e);
+  console.error("[semkeep] fatal:", e);
   process.exit(1);
 });

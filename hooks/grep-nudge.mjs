@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// PreToolUse(Grep) companion for mind-palace.
+// PreToolUse(Grep) companion for semkeep.
 // If a Grep pattern reads like a natural-language *concept* query, inject a
-// brief note suggesting the mind-palace `search` tool (meaning-based) instead.
+// brief note suggesting the semkeep `search` tool (meaning-based) instead.
 // Stays silent for exact strings / regex. ALWAYS exits 0 — never blocks Grep.
 
 let raw = "";
@@ -16,7 +16,7 @@ process.stdin.on("end", () => {
           hookSpecificOutput: {
             hookEventName: "PreToolUse",
             additionalContext:
-              "Note: this Grep pattern reads like a concept query. If the current project is indexed in mind-palace, prefer its `search` tool — it finds code by meaning (e.g. \"retry logic\" surfaces `backoffScheduler`). Keep using Grep for exact strings or regex.",
+              "Note: this Grep pattern reads like a concept query. If the current project is indexed in semkeep, prefer its `search` tool — it finds code by meaning (e.g. \"retry logic\" surfaces `backoffScheduler`). Keep using Grep for exact strings or regex.",
           },
         }),
       );

@@ -1,5 +1,5 @@
 /**
- * Shared types for Mind Palace MCP. Defined once, referenced everywhere.
+ * Shared types for semkeep. Defined once, referenced everywhere.
  */
 
 /** A pluggable embedding backend. `embed` MUST return L2-normalized vectors. */

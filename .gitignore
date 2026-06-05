@@ -5,8 +5,8 @@ node_modules/
 dist/
 *.tsbuildinfo
 
-# Mind Palace local data store
-.mindpalace/
+# semkeep local data store
+.semkeep/
 
 # Logs / env
 *.log

@@ -1,10 +1,10 @@
 {
-  "name": "mind-palace-mcp",
+  "name": "semkeep",
   "version": "0.1.0",
   "description": "Local, offline-capable MCP server for semantic search over code & local docs, plus a thin durable notes scratchpad.",
   "type": "module",
   "bin": {
-    "mind-palace-mcp": "dist/server.js"
+    "semkeep": "dist/server.js"
   },
   "files": [
     "dist"

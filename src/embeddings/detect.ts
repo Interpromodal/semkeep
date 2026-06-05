@@ -1,5 +1,5 @@
 import type { EmbeddingProvider } from "../types.js";
-import type { MindPalaceConfig } from "../config.js";
+import type { SemkeepConfig } from "../config.js";
 import { LexicalEmbedder } from "./lexical.js";
 import { OpenAIEmbedder } from "./openai.js";
 import { VoyageEmbedder } from "./voyage.js";
@@ -28,7 +28,7 @@ async function ollamaReachable(fetchImpl: FetchLike, host: string): Promise<bool
  * Only the lexical fallback is reported as `degraded`.
  */
 export async function detect(
-  config: MindPalaceConfig,
+  config: SemkeepConfig,
   fetchImpl: FetchLike = fetch as unknown as FetchLike,
   loadLocal: (model?: string) => Promise<EmbeddingProvider | null> = loadLocalEmbedder,
 ): Promise<Detection> {

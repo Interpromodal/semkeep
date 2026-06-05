@@ -22,7 +22,7 @@ writeFileSync(
 const transport = new StdioClientTransport({
   command: "node",
   args: ["dist/server.js"],
-  env: { ...process.env, MIND_PALACE_EMBEDDER: "lexical", MIND_PALACE_DATA_DIR: dataDir },
+  env: { ...process.env, SEMKEEP_EMBEDDER: "lexical", SEMKEEP_DATA_DIR: dataDir },
 });
 const client = new Client({ name: "smoke", version: "1.0.0" });
 await client.connect(transport);

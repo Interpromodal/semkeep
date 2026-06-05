@@ -1,4 +1,4 @@
-// Honest eval: semantic search (mind-palace) vs what Grep would do, on an
+// Honest eval: semantic search (semkeep) vs what Grep would do, on an
 // UNFAMILIAR real codebase (the MCP SDK's compiled source). Queries are
 // committed up front and ALL are reported — wins, losses, ties.
 import { loadConfig } from "../dist/config.js";

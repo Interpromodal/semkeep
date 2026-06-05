@@ -1,8 +1,8 @@
 import { join } from "node:path";
 
-export interface MindPalaceConfig {
+export interface SemkeepConfig {
   dataDir: string;
-  forced?: string; // MIND_PALACE_EMBEDDER: lexical|openai|voyage|ollama|local
+  forced?: string; // SEMKEEP_EMBEDDER: lexical|openai|voyage|ollama|local
   openaiKey?: string;
   voyageKey?: string;
   ollamaHost: string;
@@ -12,13 +12,13 @@ export interface MindPalaceConfig {
 export function loadConfig(
   env: NodeJS.ProcessEnv = process.env,
   cwd: string = process.cwd(),
-): MindPalaceConfig {
+): SemkeepConfig {
   return {
-    dataDir: env.MIND_PALACE_DATA_DIR || join(cwd, ".mindpalace"),
-    forced: env.MIND_PALACE_EMBEDDER,
+    dataDir: env.SEMKEEP_DATA_DIR || join(cwd, ".semkeep"),
+    forced: env.SEMKEEP_EMBEDDER,
     openaiKey: env.OPENAI_API_KEY,
     voyageKey: env.VOYAGE_API_KEY,
     ollamaHost: env.OLLAMA_HOST || "http://localhost:11434",
-    model: env.MIND_PALACE_MODEL,
+    model: env.SEMKEEP_MODEL,
   };
 }

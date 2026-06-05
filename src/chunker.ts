@@ -13,7 +13,7 @@ export const DEFAULT_INCLUDE = [
 /** Directory names skipped during the walk. */
 export const DEFAULT_IGNORE_DIRS = new Set([
   ".git", "node_modules", "dist", "build", ".next", "out", "coverage",
-  ".mindpalace", "vendor", ".venv", "venv", "__pycache__", "target",
+  ".semkeep", "vendor", ".venv", "venv", "__pycache__", "target",
   ".turbo", ".cache",
 ]);
 

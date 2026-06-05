@@ -1,5 +1,7 @@
 # Mind Palace MCP Implementation Plan
 
+> **Renamed:** this project shipped as **semkeep**. This dated plan keeps its original working name ("Mind Palace") as a historical record.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a local, offline-capable MCP server that gives Claude semantic search over code & local docs (clickable `file:line`) plus a thin durable notes scratchpad — the gap MemPalace's conversational memory leaves open.

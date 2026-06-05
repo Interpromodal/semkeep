@@ -1,5 +1,7 @@
 # Mind Palace MCP — Design Spec
 
+> **Renamed:** this project shipped as **semkeep**. This dated spec keeps its original working name ("Mind Palace") as a historical record.
+
 **Date:** 2026-06-04
 **Status:** Draft for review
 **Author:** Claude (with John, buildreach.com)

@@ -1,5 +1,5 @@
 import type { EmbeddingProvider } from "./types.js";
-import type { MindPalaceConfig } from "./config.js";
+import type { SemkeepConfig } from "./config.js";
 import { Store } from "./store.js";
 import { indexPath } from "./indexer.js";
 import { search } from "./search.js";
@@ -8,7 +8,7 @@ export interface Context {
   store: Store;
   embedder: EmbeddingProvider;
   degraded: boolean;
-  config: MindPalaceConfig;
+  config: SemkeepConfig;
 }
 
 const PROTOCOL =
@@ -30,7 +30,7 @@ export async function ensureEmbedder(store: Store, provider: EmbeddingProvider):
     store.rebuildForEmbedder(provider.name, provider.dim, re);
     await store.save();
     console.error(
-      `[mind-palace] embedder changed to ${provider.name} (dim ${provider.dim}); ` +
+      `[semkeep] embedder changed to ${provider.name} (dim ${provider.dim}); ` +
         `cleared code index (re-run index_path) and re-embedded ${old.length} note(s).`,
     );
   } else {

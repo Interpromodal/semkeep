@@ -1,10 +1,10 @@
-# Mind Palace MCP
+# semkeep
 
 A local, offline-capable [MCP](https://modelcontextprotocol.io) server that gives an AI agent **semantic (meaning-based) search over your code and local docs**, plus a thin durable **notes** scratchpad.
 
-Built-in `Grep`/`Glob` are *lexical* — they only match exact strings. Mind Palace lets the agent find things by **intent**: ask "where's the retry logic?" and get the file that defines `backoffScheduler`, even though none of those words match literally.
+Built-in `Grep`/`Glob` are *lexical* — they only match exact strings. semkeep lets the agent find things by **intent**: ask "where's the retry logic?" and get the file that defines `backoffScheduler`, even though none of those words match literally.
 
-> **Why not MemPalace?** [MemPalace](https://github.com/mempalace/mempalace) is excellent at *conversational* memory (remembering your chats). Mind Palace is the complement: it understands your *codebase*. They don't overlap.
+> **Why not MemPalace?** [MemPalace](https://github.com/mempalace/mempalace) is excellent at *conversational* memory (remembering your chats). semkeep is the complement: it understands your *codebase*. They don't overlap.
 
 ## What it does
 
@@ -46,10 +46,10 @@ node scripts/smoke-stdio.mjs   # end-to-end MCP stdio smoke
 ## Register with Claude Code
 
 ```bash
-claude mcp add -s user mind-palace -- node /absolute/path/to/dist/server.js
-# remove later with:  claude mcp remove -s user mind-palace
+claude mcp add -s user semkeep -- node /absolute/path/to/dist/server.js
+# remove later with:  claude mcp remove -s user semkeep
 ```
-Restart Claude Code so the `mind-palace` tools load. (`-s user` makes it available in every project; use `-s local` for just one.)
+Restart Claude Code so the `semkeep` tools load. (`-s user` makes it available in every project; use `-s local` for just one.)
 
 ## Companion: auto-nudge from Grep → search
 
@@ -76,11 +76,11 @@ Open `/hooks` once (or restart) to activate. To disable, delete that block or ma
 
 | Var | Meaning |
 |---|---|
-| `MIND_PALACE_DATA_DIR` | Where the JSON store lives (default `<cwd>/.mindpalace`) |
+| `SEMKEEP_DATA_DIR` | Where the JSON store lives (default `<cwd>/.semkeep`) |
 | `OPENAI_API_KEY` / `VOYAGE_API_KEY` | Use an API embedding backend |
 | `OLLAMA_HOST` | Ollama base URL (default `http://localhost:11434`) |
-| `MIND_PALACE_EMBEDDER` | Force a backend: `lexical` \| `openai` \| `voyage` \| `ollama` \| `local` |
-| `MIND_PALACE_MODEL` | Override the model name for the chosen backend |
+| `SEMKEEP_EMBEDDER` | Force a backend: `lexical` \| `openai` \| `voyage` \| `ollama` \| `local` |
+| `SEMKEEP_MODEL` | Override the model name for the chosen backend |
 
 ## Usage tips (the `status` protocol)
 
