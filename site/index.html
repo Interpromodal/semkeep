@@ -62,9 +62,11 @@
     { "@type": "Question", "name": "How is semkeep different from grep or ripgrep?",
       "acceptedAnswer": { "@type": "Answer", "text": "grep matches exact strings and regex. semkeep matches by meaning ('where is the retry logic?' finds backoffScheduler even if those words never appear) and by structure (jump to a definition, list call sites). It is a complement to grep, not a replacement: use grep for exact strings, semkeep when you do not know the exact term or need code relationships." } },
     { "@type": "Question", "name": "Is my code sent anywhere?",
-      "acceptedAnswer": { "@type": "Answer", "text": "No. semkeep runs entirely on your machine. By default it embeds and indexes code on-device with a bundled local model, so your code never leaves your computer. You can optionally point it at an API or a local Ollama instance, but nothing is sent anywhere unless you configure it." } },
+      "acceptedAnswer": { "@type": "Answer", "text": "By default, no — semkeep embeds and indexes on your machine with a bundled local model, so your code stays on your computer. One important exception: semkeep auto-detects embedding backends, so if you or another tool have set OPENAI_API_KEY or VOYAGE_API_KEY in your environment, semkeep will use that API automatically, sending code chunks to that provider (and incurring small embedding costs). To guarantee fully-local operation, set SEMKEEP_EMBEDDER=local for the bundled on-device model, or SEMKEEP_EMBEDDER=lexical for a zero-dependency offline fallback; a local Ollama backend also keeps everything on your machine. The status tool always reports which backend is active." } },
     { "@type": "Question", "name": "Does semkeep need an API key?",
       "acceptedAnswer": { "@type": "Answer", "text": "No. semkeep auto-detects the best available embedding backend in order: an API key if you have one, a local Ollama server, a bundled on-device model, and finally a deterministic lexical fallback that always works offline. It runs with zero configuration and no API key." } },
+    { "@type": "Question", "name": "How do I choose the embedding model or provider?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Two environment variables control it. SEMKEEP_EMBEDDER forces a backend (local, openai, voyage, ollama, or lexical) and overrides auto-detection. SEMKEEP_MODEL overrides the model name for that backend — for example SEMKEEP_EMBEDDER=openai with SEMKEEP_MODEL=text-embedding-3-large (the OpenAI default is text-embedding-3-small). When no backend is forced, precedence is OPENAI_API_KEY, then VOYAGE_API_KEY, then a reachable Ollama, then the bundled on-device model, then the lexical fallback. In semkeep's published benchmark a stronger embedding model improved semantic-search accuracy substantially, but the biggest model was not always the best, so it is worth testing models on your own codebase." } },
     { "@type": "Question", "name": "Which languages does semkeep support?",
       "acceptedAnswer": { "@type": "Answer", "text": "Structural features (define, callers, outline, imports, symbol-aware chunking) support TypeScript, JavaScript, TSX, and JSX today, with the parser designed to add more languages easily. Semantic search works over any text file, including docs and Markdown." } },
     { "@type": "Question", "name": "How does the index stay fresh?",
@@ -200,6 +202,7 @@
       <a href="#compare">vs grep</a>
       <a href="#install">Install</a>
       <a href="#faq">FAQ</a>
+      <a href="https://buildreach.substack.com/p/i-let-an-ai-build-the-tool-it-wished" target="_blank" rel="noopener">Benchmark ↗</a>
       <a class="btn btn-ghost" href="https://www.npmjs.com/package/semkeep" rel="noopener">npm ↗</a>
     </nav>
   </div>
@@ -327,7 +330,7 @@ client/streamableHttp.js:249
         <h3>Index, then ask</h3>
         <pre>index_path  ./src
 search      "where is the websocket reconnect logic"</pre>
-        <p>Embeddings auto‑detect: API key → local Ollama → on‑device model → lexical fallback. It always works offline, and your code never leaves your machine.</p>
+        <p>Embeddings auto‑detect: API key → local Ollama → on‑device model → lexical fallback. The default on‑device model keeps your code on your machine — note it will auto‑use <span class="mono">OPENAI_API_KEY</span> if your environment has one; set <span class="mono">SEMKEEP_EMBEDDER=local</span> to force fully local.</p>
       </li>
     </ol>
   </div>
@@ -368,6 +371,7 @@ search      "where is the websocket reconnect logic"</pre>
     <div>
       <a href="https://www.npmjs.com/package/semkeep" rel="noopener">npm</a> ·
       <a href="#faq">FAQ</a> ·
+      <a href="https://buildreach.substack.com/p/i-let-an-ai-build-the-tool-it-wished" target="_blank" rel="noopener">Benchmark</a> ·
       <a href="https://venmo.com/u/InsertCoin" rel="noopener">Tip jar</a> ·
       built with Claude Code
     </div>

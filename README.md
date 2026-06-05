@@ -42,6 +42,8 @@ On startup it auto-selects the best **available** embedding backend and reports 
 
 So it runs anywhere with zero config, and silently upgrades quality the moment a better backend appears.
 
+> **⚠️ API keys are used automatically.** Because detection prefers an API backend first, if `OPENAI_API_KEY` or `VOYAGE_API_KEY` is present in your environment (e.g. exported globally for another tool, or sitting in a loaded `.env`), semkeep will use it — sending code chunks to that provider and incurring small embedding costs. To force fully-local embeddings regardless, set `SEMKEEP_EMBEDDER=local` (bundled model) or `SEMKEEP_EMBEDDER=lexical` (zero-dependency). `status` always reports the active backend.
+
 ### Optional: enable the local semantic model (no API key)
 ```bash
 npm install @huggingface/transformers
@@ -107,9 +109,25 @@ Open `/hooks` once (or restart) to activate. To disable, delete that block or ma
 | `OPENAI_API_KEY` / `VOYAGE_API_KEY` | Use an API embedding backend |
 | `OLLAMA_HOST` | Ollama base URL (default `http://localhost:11434`) |
 | `SEMKEEP_EMBEDDER` | Force a backend: `lexical` \| `openai` \| `voyage` \| `ollama` \| `local` |
-| `SEMKEEP_MODEL` | Override the model name for the chosen backend |
+| `SEMKEEP_MODEL` | Override the model for the chosen backend (e.g. `text-embedding-3-large`, `text-embedding-3-small`, `voyage-3`, `nomic-embed-text`) |
 | `SEMKEEP_AUTO_REFRESH` | Set `0` to disable auto-freshen-on-query (default on) |
 | `SEMKEEP_REFRESH_DEBOUNCE_MS` | Min ms between freshness scans (default 1500) |
+
+### Choosing a backend & model
+
+Detection is automatic, but you can pin it explicitly:
+
+```bash
+# Force fully-local (bundled on-device model) even if an API key is present
+SEMKEEP_EMBEDDER=local
+
+# Use OpenAI with the strongest model
+SEMKEEP_EMBEDDER=openai
+OPENAI_API_KEY=sk-...
+SEMKEEP_MODEL=text-embedding-3-large    # default is text-embedding-3-small
+```
+
+In [our benchmark](https://buildreach.substack.com/p/i-let-an-ai-build-the-tool-it-wished) a stronger embedding model took semantic search from *losing* to grep to clearly *beating* it — but the **biggest model wasn't always the best** (it sometimes ranked example/demo code above the real implementation), so test on your own codebase. Run `status` to confirm which backend and model are active.
 
 ## Usage tips (the `status` protocol)
 
