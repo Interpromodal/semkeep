@@ -191,6 +191,17 @@ export async function unmarkTool(args: { id: string; project?: string }): Promis
   return ok ? `Forgot marker ${args.id} for ${project}.` : `No marker ${args.id} found for ${project}.`;
 }
 
+function describeCredentialSource(ctx: Context): string {
+  const src = ctx.config.credentialSource;
+  if (src === "scoped-env") {
+    const which = process.env.SEMKEEP_OPENAI_API_KEY ? "SEMKEEP_OPENAI_API_KEY" : "SEMKEEP_VOYAGE_API_KEY";
+    return `scoped (${which})`;
+  }
+  if (src === "config-file") return "config-file (~/.semkeep/config.json)";
+  if (src === "inherited-env") return "inherited (SEMKEEP_INHERIT_ENV_KEYS=1 — ambient keys in use)";
+  return "none (local/lexical embedder only — ambient API keys are intentionally ignored)";
+}
+
 export function statusTool(ctx: Context): string {
   const s = ctx.store.stats();
   const degradedNote = ctx.degraded
@@ -206,6 +217,7 @@ export function statusTool(ctx: Context): string {
   }
   return [
     `embedder: ${s.embedder || ctx.embedder.name} (dim ${s.dim || ctx.embedder.dim})${degradedNote}`,
+    `credentials: ${describeCredentialSource(ctx)}`,
     `indexed: ${s.fileCount} files, ${s.chunkCount} chunks`,
     `structure: ${s.symbolCount} symbols, ${s.importCount} imports`,
     `roots: ${ctx.store.roots().length} (auto-refresh ${ctx.config.autoRefresh ? "on" : "off"})`,
