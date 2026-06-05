@@ -74,11 +74,13 @@ export function renderHuman(r: Report, verbose = false): string {
 
     // Show detail on failure (or always when verbose).
     if (!c.passed || verbose) {
-      if (c.result !== undefined && c.run !== undefined) {
-        const runCmd = Array.isArray(c.run) ? c.run.join(" ") : c.run;
+      if (c.result !== undefined && c.run_cmd) {
         let meta = `exit ${c.result.exit_code}, ${Math.round(c.result.duration_ms)}ms`;
         if (c.result.timed_out) meta += ", TIMED OUT";
-        lines.push(`         run: ${runCmd}  (${meta})`);
+        lines.push(`         run: ${c.run_cmd}  (${meta})`);
+      }
+      if (c.note) {
+        lines.push(`         note: ${c.note}`);
       }
       for (const a of c.assertions) {
         const mark = a.ok ? "ok" : "FAIL";
@@ -128,16 +130,13 @@ function runToDict(result: RunResult | undefined): Record<string, unknown> | nul
 }
 
 function checkToDict(c: CheckResult): Record<string, unknown> {
-  const runCmd = c.run !== undefined
-    ? (Array.isArray(c.run) ? c.run.join(" ") : c.run)
-    : "";
   return {
     name: c.name,
     ok: c.passed,
     optional: c.optional,
     skipped: c.skipped,
-    run_cmd: runCmd,
-    note: "",
+    run_cmd: c.run_cmd ?? "",
+    note: c.note ?? "",
     run: runToDict(c.result),
     assertions: c.assertions.map((a) => ({
       type: a.type,
@@ -162,7 +161,7 @@ export function renderJson(r: Report): unknown {
     green: r.green,
     required_total: r.required_total,
     required_passed: r.required_passed,
-    cwd: ".",
+    cwd: r.cwd,
     results: r.checks.map(checkToDict),
   };
 }

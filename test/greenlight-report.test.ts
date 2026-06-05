@@ -77,6 +77,7 @@ function makeReport(checks: CheckResult[], name = "demo"): Report {
     required_total: required.length,
     required_passed: requiredPassed.length,
     green: requiredPassed.length === required.length,
+    cwd: ".",
   };
 }
 

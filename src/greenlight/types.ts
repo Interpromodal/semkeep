@@ -63,9 +63,11 @@ export interface CheckResult {
   optional: boolean;
   skipped: boolean;
   run?: string | string[];
+  run_cmd?: string;          // display string for the command (matches Python run_cmd)
   result?: RunResult;        // absent if no `run`
   assertions: AssertionResult[];
   passed: boolean;           // all assertions ok AND not timed_out
+  note?: string;             // timeout / spawn-error message (matches Python CheckResult.note)
 }
 
 export interface Report {
@@ -74,4 +76,5 @@ export interface Report {
   required_total: number;
   required_passed: number;
   green: boolean;
+  cwd: string;               // resolved base cwd (matches Python Report.cwd)
 }

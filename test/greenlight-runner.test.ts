@@ -109,7 +109,22 @@ describe("runner — basic execution", () => {
     const rep = runSpec(spec, { cwd: "." });
     expect(rep.checks[0].passed).toBe(false);
     expect(rep.checks[0].result?.timed_out).toBe(true);
+    // note must mention timeout — mirrors test_runner.py L82-83
+    expect(rep.checks[0].note?.toLowerCase()).toMatch(/time/);
   }, 5000);
+
+  it("run_cmd is recorded for display (argv-list command)", () => {
+    // Mirrors test_runner.py test_run_cmd_is_recorded_for_display (L93-96)
+    const spec = makeSpec([
+      {
+        name: "c",
+        run: ["node", "-e", "console.log(1)"],
+        assert: [{ type: "exit_code", equals: 0 }],
+      },
+    ]);
+    const rep = runSpec(spec);
+    expect(rep.checks[0].run_cmd).toContain("-e");
+  });
 
   it("missing command does not throw — check fails", () => {
     const spec = makeSpec([
