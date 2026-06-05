@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import type { EmbeddingProvider } from "./types.js";
 import type { SemkeepConfig } from "./config.js";
 import { Store } from "./store.js";
@@ -14,7 +15,8 @@ export interface Context {
 const PROTOCOL =
   "Prefer `search` for meaning-based code lookup (you don't need the exact identifier); " +
   "scope with pathPrefix/ext to sharpen results; use Grep only for exact strings. " +
-  "Use remember/recall for durable working notes.";
+  "For structural questions use define (where is X defined), outline (what's in this file), " +
+  "callers (who calls X), imports (dependency edges). Use remember/recall for durable notes.";
 
 /**
  * Ensure the store's embedder matches the active provider. If the dimension
@@ -118,8 +120,66 @@ export function statusTool(ctx: Context): string {
   return [
     `embedder: ${s.embedder || ctx.embedder.name} (dim ${s.dim || ctx.embedder.dim})${degradedNote}`,
     `indexed: ${s.fileCount} files, ${s.chunkCount} chunks`,
+    `structure: ${s.symbolCount} symbols, ${s.importCount} imports`,
     `notes: ${s.noteCount}`,
     `dataDir: ${ctx.config.dataDir}`,
     `protocol: ${PROTOCOL}`,
   ].join("\n");
+}
+
+export function outlineTool(ctx: Context, args: { path: string }): string {
+  const file = resolve(args.path);
+  const syms = ctx.store.outline(file);
+  if (!syms.length) return `No symbols for ${file} (not indexed, or no parseable code).`;
+  return syms
+    .map((s) => {
+      const indent = s.container ? "    " : "  ";
+      const exp = s.exported ? "export " : "";
+      const qual = s.container ? `${s.container}.` : "";
+      return `${indent}${exp}${s.kind} ${qual}${s.name}  (${s.startLine}-${s.endLine})`;
+    })
+    .join("\n");
+}
+
+export function defineTool(ctx: Context, args: { name: string; pathPrefix?: string }): string {
+  const defs = ctx.store.findDefinitions(args.name, args.pathPrefix);
+  if (!defs.length) return `No definition found for "${args.name}".`;
+  return defs
+    .map((s) => {
+      const sig = s.signature ? `\n    ${s.signature}` : "";
+      return `${s.file}:${s.startLine}  ${s.exported ? "export " : ""}${s.kind} ${s.name}${sig}`;
+    })
+    .join("\n\n");
+}
+
+export function callersTool(ctx: Context, args: { name: string; pathPrefix?: string }): string {
+  const refs = ctx.store.findReferences(args.name, args.pathPrefix);
+  if (!refs.length) return `No call sites found for "${args.name}" (heuristic: call/new sites only).`;
+  const shown = refs.slice(0, 50).map((r) => `${r.file}:${r.line}`);
+  const more = refs.length > 50 ? `\n… and ${refs.length - 50} more` : "";
+  return shown.join("\n") + more;
+}
+
+export function importsTool(
+  ctx: Context,
+  args: { path: string; direction?: "in" | "out" | "both" },
+): string {
+  const file = resolve(args.path);
+  const dir = args.direction ?? "both";
+  const parts: string[] = [];
+  if (dir === "out" || dir === "both") {
+    const out = ctx.store.importsOf(file);
+    parts.push(
+      out.length
+        ? "imports (out):\n" + out.map((i) => `  ${i.source}  [${i.names.join(", ")}]`).join("\n")
+        : "imports (out): none",
+    );
+  }
+  if (dir === "in" || dir === "both") {
+    const inn = ctx.store.importedBy(file);
+    parts.push(
+      inn.length ? "imported by (in):\n" + inn.map((i) => `  ${i.file}`).join("\n") : "imported by (in): none",
+    );
+  }
+  return parts.join("\n\n");
 }

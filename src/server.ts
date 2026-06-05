@@ -7,9 +7,13 @@ import { detect } from "./embeddings/detect.js";
 import { Store } from "./store.js";
 import {
   type Context,
+  callersTool,
+  defineTool,
   ensureEmbedder,
   forgetTool,
+  importsTool,
   indexPathTool,
+  outlineTool,
   recallTool,
   rememberTool,
   searchTool,
@@ -109,6 +113,53 @@ server.registerTool(
     description: "Show index stats, the active embedding backend, and the usage protocol.",
   },
   async () => text(statusTool(await getContext())),
+);
+
+server.registerTool(
+  "outline",
+  {
+    description:
+      "List the symbols (functions/classes/methods/types) defined in a file or directory, with line ranges.",
+    inputSchema: { path: z.string().describe("File or directory path") },
+  },
+  async (args) => text(outlineTool(await getContext(), args)),
+);
+
+server.registerTool(
+  "define",
+  {
+    description: "Find where a symbol is defined: file:line, kind, and signature.",
+    inputSchema: {
+      name: z.string().describe("Symbol name to locate"),
+      pathPrefix: z.string().optional().describe("Restrict to files under this path prefix"),
+    },
+  },
+  async (args) => text(defineTool(await getContext(), args)),
+);
+
+server.registerTool(
+  "callers",
+  {
+    description:
+      "Find call/usage sites of a symbol (identifier-aware heuristic from call sites, import-ranked).",
+    inputSchema: {
+      name: z.string().describe("Symbol name to find callers of"),
+      pathPrefix: z.string().optional().describe("Restrict to files under this path prefix"),
+    },
+  },
+  async (args) => text(callersTool(await getContext(), args)),
+);
+
+server.registerTool(
+  "imports",
+  {
+    description: "Show what a file imports (out) and/or which files import it (in).",
+    inputSchema: {
+      path: z.string().describe("File path"),
+      direction: z.enum(["in", "out", "both"]).optional().describe("Default both"),
+    },
+  },
+  async (args) => text(importsTool(await getContext(), args)),
 );
 
 async function main() {
