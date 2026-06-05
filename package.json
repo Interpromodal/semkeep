@@ -1,8 +1,11 @@
 {
   "name": "semkeep",
-  "version": "0.1.0",
-  "description": "Local, offline-capable MCP server for semantic search over code & local docs, plus a thin durable notes scratchpad.",
+  "version": "1.0.0",
+  "description": "Semantic + structural code intelligence for AI agents, as a local MCP server: find code by meaning, jump to definitions, see who-calls-what, with auto-fresh indexing and notes anchored to symbols. Offline-capable, no API key.",
   "type": "module",
+  "homepage": "https://semkeep.com",
+  "author": "John <john@buildreach.com> (https://semkeep.com)",
+  "funding": "https://venmo.com/insertcoin",
   "bin": {
     "semkeep": "dist/server.js"
   },
@@ -11,6 +14,7 @@
   ],
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "npm run build",
     "start": "node dist/server.js",
     "dev": "tsx src/server.ts",
     "test": "vitest run",

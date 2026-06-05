@@ -1,0 +1,28 @@
+{
+  "name": "semkeep",
+  "displayName": "semkeep",
+  "version": "1.0.0",
+  "description": "Semantic + structural code intelligence for AI agents: find code by meaning, jump to definitions, see who-calls-what, with auto-fresh indexing and notes anchored to symbols. Local, offline-capable, no API key required.",
+  "author": {
+    "name": "John",
+    "email": "john@buildreach.com",
+    "url": "https://semkeep.com"
+  },
+  "homepage": "https://semkeep.com",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "semantic-search",
+    "code-search",
+    "code-intelligence",
+    "tree-sitter",
+    "embeddings",
+    "claude"
+  ],
+  "mcpServers": {
+    "semkeep": {
+      "command": "npx",
+      "args": ["-y", "semkeep"]
+    }
+  }
+}

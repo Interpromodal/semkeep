@@ -1,0 +1,20 @@
+{
+  "name": "semkeep",
+  "owner": {
+    "name": "John",
+    "email": "john@buildreach.com",
+    "url": "https://semkeep.com"
+  },
+  "description": "semkeep — semantic + structural code intelligence for AI agents, as a local MCP server.",
+  "plugins": [
+    {
+      "name": "semkeep",
+      "source": "./",
+      "description": "Find code by meaning, jump to definitions, see who-calls-what, auto-fresh index, and notes anchored to symbols. Local, offline-capable, no API key. Bundles a Grep nudge hook.",
+      "version": "1.0.0",
+      "homepage": "https://semkeep.com",
+      "license": "MIT",
+      "keywords": ["mcp", "semantic-search", "code-search", "claude"]
+    }
+  ]
+}
