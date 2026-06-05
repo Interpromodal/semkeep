@@ -4,7 +4,9 @@ import { createHash } from "node:crypto";
 import type {
   Chunk,
   CodeSymbol,
+  FileStat,
   ImportEdge,
+  IndexRoot,
   Note,
   Reference,
   SearchHit,
@@ -59,21 +61,25 @@ export class Store {
     if (existsSync(file)) {
       data = JSON.parse(readFileSync(file, "utf8")) as StoreData;
       data.files ??= {};
+      data.fileStats ??= {};
       data.chunks ??= [];
       data.notes ??= [];
       data.symbols ??= [];
       data.imports ??= [];
       data.references ??= [];
+      data.roots ??= [];
       data.meta ??= { embedder: "", dim: 0, version: STORE_VERSION };
     } else {
       data = {
         meta: { embedder: "", dim: 0, version: STORE_VERSION },
         files: {},
+        fileStats: {},
         chunks: [],
         notes: [],
         symbols: [],
         imports: [],
         references: [],
+        roots: [],
       };
     }
     return new Store(dataDir, file, data);
@@ -128,6 +134,38 @@ export class Store {
     this.data.imports.push(...imports);
     this.data.references = this.data.references.filter((r) => r.file !== file);
     this.data.references.push(...references);
+  }
+
+  /** Record an indexed root (deduped by path), so freshen knows what to scan. */
+  setRoot(path: string, opts: { include?: string[]; exclude?: string[] }): void {
+    this.data.roots = this.data.roots.filter((r) => r.path !== path);
+    this.data.roots.push({ path, include: opts.include, exclude: opts.exclude });
+  }
+
+  roots(): IndexRoot[] {
+    return this.data.roots;
+  }
+
+  fileStat(path: string): FileStat | undefined {
+    return this.data.fileStats[path];
+  }
+
+  setFileStat(path: string, sig: FileStat): void {
+    this.data.fileStats[path] = sig;
+  }
+
+  allIndexedFiles(): string[] {
+    return Object.keys(this.data.files);
+  }
+
+  /** Remove every record for a file (used when a file is deleted from disk). */
+  pruneFile(file: string): void {
+    this.data.chunks = this.data.chunks.filter((c) => c.file !== file);
+    this.data.symbols = this.data.symbols.filter((s) => s.file !== file);
+    this.data.imports = this.data.imports.filter((i) => i.file !== file);
+    this.data.references = this.data.references.filter((r) => r.file !== file);
+    delete this.data.files[file];
+    delete this.data.fileStats[file];
   }
 
   findDefinitions(name: string, pathPrefix?: string): CodeSymbol[] {
@@ -261,10 +299,12 @@ export class Store {
   rebuildForEmbedder(name: string, dim: number, reembeddedNotes: Note[]): void {
     this.data.chunks = [];
     this.data.files = {};
+    this.data.fileStats = {}; // force every file to re-stat/re-embed under the new embedder
     this.data.notes = reembeddedNotes;
     this.data.symbols = [];
     this.data.imports = [];
     this.data.references = [];
+    // roots are kept — they are re-index targets, independent of the embedder.
     this.data.meta = { embedder: name, dim, version: STORE_VERSION };
   }
 

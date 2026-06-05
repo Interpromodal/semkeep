@@ -70,14 +70,29 @@ export interface Note {
 }
 
 /** On-disk store shape. */
+/** An indexed target (passed to index_path) the server keeps fresh. */
+export interface IndexRoot {
+  path: string; // absolute
+  include?: string[];
+  exclude?: string[];
+}
+
+/** Cheap per-file change signature (no read required). */
+export interface FileStat {
+  mtime: number; // statSync().mtimeMs
+  size: number;
+}
+
 export interface StoreData {
   meta: { embedder: string; dim: number; version: number };
   files: Record<string, string>; // path -> contentHash, for skip-unchanged
+  fileStats: Record<string, FileStat>; // path -> stat signature, for freshness checks
   chunks: Chunk[];
   notes: Note[];
   symbols: CodeSymbol[];
   imports: ImportEdge[];
   references: Reference[];
+  roots: IndexRoot[];
 }
 
 /** A ranked code search result. */
