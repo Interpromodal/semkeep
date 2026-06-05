@@ -7,6 +7,8 @@ export interface SemkeepConfig {
   voyageKey?: string;
   ollamaHost: string;
   model?: string;
+  autoRefresh: boolean; // freshen-on-query (SEMKEEP_AUTO_REFRESH=0 to disable)
+  refreshDebounceMs: number; // skip re-scan if freshened more recently than this
 }
 
 export function loadConfig(
@@ -20,5 +22,7 @@ export function loadConfig(
     voyageKey: env.VOYAGE_API_KEY,
     ollamaHost: env.OLLAMA_HOST || "http://localhost:11434",
     model: env.SEMKEEP_MODEL,
+    autoRefresh: env.SEMKEEP_AUTO_REFRESH !== "0" && env.SEMKEEP_AUTO_REFRESH !== "false",
+    refreshDebounceMs: Number(env.SEMKEEP_REFRESH_DEBOUNCE_MS) || 1500,
   };
 }

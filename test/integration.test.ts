@@ -27,6 +27,8 @@ async function ctx(): Promise<Context> {
     config: {
       dataDir,
       ollamaHost: "http://localhost:11434",
+      autoRefresh: false,
+      refreshDebounceMs: 0,
     },
   };
 }

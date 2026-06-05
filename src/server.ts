@@ -15,6 +15,7 @@ import {
   indexPathTool,
   outlineTool,
   recallTool,
+  refreshTool,
   rememberTool,
   searchTool,
   statusTool,
@@ -122,7 +123,7 @@ server.registerTool(
       "List the symbols (functions/classes/methods/types) defined in a file or directory, with line ranges.",
     inputSchema: { path: z.string().describe("File or directory path") },
   },
-  async (args) => text(outlineTool(await getContext(), args)),
+  async (args) => text(await outlineTool(await getContext(), args)),
 );
 
 server.registerTool(
@@ -134,7 +135,7 @@ server.registerTool(
       pathPrefix: z.string().optional().describe("Restrict to files under this path prefix"),
     },
   },
-  async (args) => text(defineTool(await getContext(), args)),
+  async (args) => text(await defineTool(await getContext(), args)),
 );
 
 server.registerTool(
@@ -147,7 +148,7 @@ server.registerTool(
       pathPrefix: z.string().optional().describe("Restrict to files under this path prefix"),
     },
   },
-  async (args) => text(callersTool(await getContext(), args)),
+  async (args) => text(await callersTool(await getContext(), args)),
 );
 
 server.registerTool(
@@ -159,7 +160,15 @@ server.registerTool(
       direction: z.enum(["in", "out", "both"]).optional().describe("Default both"),
     },
   },
-  async (args) => text(importsTool(await getContext(), args)),
+  async (args) => text(await importsTool(await getContext(), args)),
+);
+
+server.registerTool(
+  "refresh",
+  {
+    description: "Force the index to re-scan its roots now: index new/changed files, prune deleted.",
+  },
+  async () => text(await refreshTool(await getContext())),
 );
 
 async function main() {

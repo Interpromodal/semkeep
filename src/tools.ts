@@ -4,6 +4,7 @@ import type { SemkeepConfig } from "./config.js";
 import { Store } from "./store.js";
 import { indexPath } from "./indexer.js";
 import { search } from "./search.js";
+import { freshen } from "./freshen.js";
 
 export interface Context {
   store: Store;
@@ -17,6 +18,26 @@ const PROTOCOL =
   "scope with pathPrefix/ext to sharpen results; use Grep only for exact strings. " +
   "For structural questions use define (where is X defined), outline (what's in this file), " +
   "callers (who calls X), imports (dependency edges). Use remember/recall for durable notes.";
+
+// Debounced auto-freshen state, per server process.
+let lastFreshenAt = 0;
+
+/** Bring the index up to date before a query, respecting autoRefresh + debounce. */
+export async function maybeFreshen(ctx: Context): Promise<void> {
+  if (!ctx.config.autoRefresh) return;
+  const now = Date.now();
+  if (now - lastFreshenAt < ctx.config.refreshDebounceMs) return;
+  lastFreshenAt = now;
+  const r = await freshen(ctx.store, ctx.embedder);
+  if (r.added || r.reindexed || r.pruned) await ctx.store.save();
+}
+
+/** Force an index refresh now (bypasses the debounce). */
+export async function refreshTool(ctx: Context): Promise<string> {
+  const r = await freshen(ctx.store, ctx.embedder);
+  await ctx.store.save();
+  return `Refreshed: +${r.added} new, ${r.reindexed} changed, -${r.pruned} pruned (scanned ${r.scanned}) in ${r.elapsedMs}ms.`;
+}
 
 /**
  * Ensure the store's embedder matches the active provider. If the dimension
@@ -61,6 +82,7 @@ export async function searchTool(
   ctx: Context,
   args: { query: string; k?: number; pathPrefix?: string; ext?: string[]; mode?: "semantic" | "hybrid" },
 ): Promise<string> {
+  await maybeFreshen(ctx);
   const hits = await search(ctx.store, ctx.embedder, args.query, {
     k: args.k,
     pathPrefix: args.pathPrefix,
@@ -121,13 +143,15 @@ export function statusTool(ctx: Context): string {
     `embedder: ${s.embedder || ctx.embedder.name} (dim ${s.dim || ctx.embedder.dim})${degradedNote}`,
     `indexed: ${s.fileCount} files, ${s.chunkCount} chunks`,
     `structure: ${s.symbolCount} symbols, ${s.importCount} imports`,
+    `roots: ${ctx.store.roots().length} (auto-refresh ${ctx.config.autoRefresh ? "on" : "off"})`,
     `notes: ${s.noteCount}`,
     `dataDir: ${ctx.config.dataDir}`,
     `protocol: ${PROTOCOL}`,
   ].join("\n");
 }
 
-export function outlineTool(ctx: Context, args: { path: string }): string {
+export async function outlineTool(ctx: Context, args: { path: string }): Promise<string> {
+  await maybeFreshen(ctx);
   const file = resolve(args.path);
   const syms = ctx.store.outline(file);
   if (!syms.length) return `No symbols for ${file} (not indexed, or no parseable code).`;
@@ -141,7 +165,11 @@ export function outlineTool(ctx: Context, args: { path: string }): string {
     .join("\n");
 }
 
-export function defineTool(ctx: Context, args: { name: string; pathPrefix?: string }): string {
+export async function defineTool(
+  ctx: Context,
+  args: { name: string; pathPrefix?: string },
+): Promise<string> {
+  await maybeFreshen(ctx);
   const defs = ctx.store.findDefinitions(args.name, args.pathPrefix);
   if (!defs.length) return `No definition found for "${args.name}".`;
   return defs
@@ -152,7 +180,11 @@ export function defineTool(ctx: Context, args: { name: string; pathPrefix?: stri
     .join("\n\n");
 }
 
-export function callersTool(ctx: Context, args: { name: string; pathPrefix?: string }): string {
+export async function callersTool(
+  ctx: Context,
+  args: { name: string; pathPrefix?: string },
+): Promise<string> {
+  await maybeFreshen(ctx);
   const refs = ctx.store.findReferences(args.name, args.pathPrefix);
   if (!refs.length) return `No call sites found for "${args.name}" (heuristic: call/new sites only).`;
   const shown = refs.slice(0, 50).map((r) => `${r.file}:${r.line}`);
@@ -160,10 +192,11 @@ export function callersTool(ctx: Context, args: { name: string; pathPrefix?: str
   return shown.join("\n") + more;
 }
 
-export function importsTool(
+export async function importsTool(
   ctx: Context,
   args: { path: string; direction?: "in" | "out" | "both" },
-): string {
+): Promise<string> {
+  await maybeFreshen(ctx);
   const file = resolve(args.path);
   const dir = args.direction ?? "both";
   const parts: string[] = [];
