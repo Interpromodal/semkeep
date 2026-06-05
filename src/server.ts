@@ -22,6 +22,8 @@ import {
   searchTool,
   statusTool,
   unmarkTool,
+  greenlightRunTool,
+  greenlightLintTool,
 } from "./tools.js";
 
 // Lazily build the context on first tool call: detect the embedder, load the
@@ -158,6 +160,35 @@ server.registerTool(
     },
   },
   async (args) => text(await unmarkTool(args)),
+);
+
+server.registerTool(
+  "greenlight_run",
+  {
+    description:
+      "Run a definition-of-done gate: execute a JSON spec's checks and assert their results. Returns GREEN only if all required checks pass. Provide an inline `spec` or a `spec_path`.",
+    inputSchema: {
+      spec: z.record(z.any()).optional().describe("Inline spec object: { checks: [...] }"),
+      spec_path: z.string().optional().describe("Path to a JSON spec file"),
+      cwd: z.string().optional().describe("Base working directory for checks (default '.')"),
+      only: z.array(z.string()).optional().describe("Run only these check names"),
+      strict: z.boolean().optional().describe("Also flag gates too shallow to trust"),
+    },
+  },
+  async (args) => text(await greenlightRunTool(args)),
+);
+
+server.registerTool(
+  "greenlight_lint",
+  {
+    description:
+      "Statically analyze a greenlight spec for shallow gates (checks that would pass without proving anything). Runs nothing.",
+    inputSchema: {
+      spec: z.record(z.any()).optional().describe("Inline spec object"),
+      spec_path: z.string().optional().describe("Path to a JSON spec file"),
+    },
+  },
+  async (args) => text(await greenlightLintTool(args)),
 );
 
 server.registerTool(

@@ -9,6 +9,7 @@ import { OperationalStore, type MarkInput, type RecallFilter } from "./operation
 import { resolveProject, defaultOpsStorePath } from "./operational/paths.js";
 import { formatMarkers, formatMark } from "./operational/format.js";
 import type { MarkerKind } from "./operational/types.js";
+import { loadSpec, runSpec, lintSpec, renderHuman } from "./greenlight/index.js";
 
 export interface Context {
   store: Store;
@@ -290,4 +291,33 @@ export async function importsTool(
     );
   }
   return parts.join("\n\n");
+}
+
+// ---------------------------------------------------------------------------
+// Greenlight tools
+// ---------------------------------------------------------------------------
+
+export async function greenlightRunTool(
+  args: { spec?: unknown; spec_path?: string; cwd?: string; only?: string[]; strict?: boolean },
+): Promise<string> {
+  const spec = loadSpec({ spec: args.spec, specPath: args.spec_path });
+  const report = runSpec(spec, { cwd: args.cwd, only: args.only });
+  let out = renderHuman(report);
+  if (args.strict) {
+    const warns = lintSpec(spec);
+    if (warns.length) {
+      out += "\n\nStrict warnings:\n" + warns.map((w) => `  - [${w.check}] ${w.message}`).join("\n");
+    }
+  }
+  return out;
+}
+
+export async function greenlightLintTool(
+  args: { spec?: unknown; spec_path?: string },
+): Promise<string> {
+  const spec = loadSpec({ spec: args.spec, specPath: args.spec_path });
+  const warns = lintSpec(spec);
+  return warns.length
+    ? "Shallow-gate warnings:\n" + warns.map((w) => `  - [${w.check}] (${w.rule}) ${w.message}`).join("\n")
+    : "No shallow-gate warnings — the spec's checks assert real behavior.";
 }
