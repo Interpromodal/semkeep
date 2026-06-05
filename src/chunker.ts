@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
+import type { SymbolKind } from "./types.js";
 
 /** File extensions (no leading dot) indexed by default. */
 export const DEFAULT_INCLUDE = [
@@ -80,6 +81,8 @@ export interface RawChunk {
   startLine: number; // 1-based inclusive
   endLine: number; // 1-based inclusive
   text: string;
+  symbolName?: string; // set when the chunk is aligned to a symbol
+  kind?: SymbolKind;
 }
 
 /**
