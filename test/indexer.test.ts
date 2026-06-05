@@ -47,3 +47,20 @@ test("indexing a single file works too", async () => {
   const r = await indexPath(store, emb, f);
   expect(r.filesIndexed).toBe(1);
 });
+
+test("indexing extracts symbols queryable via the store", async () => {
+  const d = mkdtempSync(join(tmpdir(), "mp-idx-sym-"));
+  writeFileSync(
+    join(d, "net.ts"),
+    "export function retryWithBackoff(){ return 1 }\nexport class Scheduler { tick(){} }\n",
+  );
+  const store = await Store.load(mkdtempSync(join(tmpdir(), "mp-data-sym-")));
+  const emb = new LexicalEmbedder(128);
+  store.setEmbedderMeta(emb.name, emb.dim);
+  const r = await indexPath(store, emb, d);
+  expect(r.symbolsAdded).toBeGreaterThanOrEqual(2);
+  const def = store.findDefinitions("retryWithBackoff");
+  expect(def).toHaveLength(1);
+  expect(def[0].kind).toBe("function");
+  expect(store.outline(def[0].file).map((s) => s.name)).toContain("Scheduler");
+});

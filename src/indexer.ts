@@ -1,8 +1,11 @@
 import { readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
-import type { Chunk, EmbeddingProvider } from "./types.js";
+import type { Chunk, CodeSymbol, EmbeddingProvider, ImportEdge, Reference } from "./types.js";
 import { Store } from "./store.js";
-import { chunkText, DEFAULT_INCLUDE, hashContent, walk } from "./chunker.js";
+import { DEFAULT_INCLUDE, hashContent, walk } from "./chunker.js";
+import { parseFile } from "./structure/parser.js";
+import { extractImports, extractReferences, extractSymbols } from "./structure/symbols.js";
+import { symbolChunks } from "./structure/chunkBySymbol.js";
 
 export interface IndexOptions {
   include?: string[];
@@ -14,13 +17,15 @@ export interface IndexResult {
   filesIndexed: number;
   filesSkipped: number;
   chunksAdded: number;
+  symbolsAdded: number;
   embedder: string;
   elapsedMs: number;
 }
 
 /**
- * Index a directory (recursively) or a single file into the store. Files whose
- * content hash is unchanged since last index are skipped unless `force` is set.
+ * Index a directory (recursively) or a single file. For each (re-)indexed file:
+ * parse → extract symbols/imports/references → store them, then chunk on symbol
+ * boundaries (line-window fallback when unparseable). Unchanged files are skipped.
  */
 export async function indexPath(
   store: Store,
@@ -44,6 +49,7 @@ export async function indexPath(
   let filesIndexed = 0;
   let filesSkipped = 0;
   let chunksAdded = 0;
+  let symbolsAdded = 0;
 
   for (const file of files) {
     let text: string;
@@ -57,7 +63,20 @@ export async function indexPath(
       filesSkipped++;
       continue;
     }
-    const raw = chunkText(text);
+
+    let symbols: CodeSymbol[] = [];
+    let imports: ImportEdge[] = [];
+    let references: Reference[] = [];
+    const parsed = await parseFile(file, text);
+    if (parsed) {
+      symbols = extractSymbols(parsed.tree, file, hash);
+      imports = extractImports(parsed.tree, file);
+      references = extractReferences(parsed.tree, file);
+    }
+    store.replaceFileSymbols(file, symbols, imports, references);
+    symbolsAdded += symbols.length;
+
+    const raw = symbolChunks(text, symbols); // line-window fallback when no symbols
     const vectors = raw.length ? await embedder.embed(raw.map((c) => c.text)) : [];
     const chunks: Chunk[] = raw.map((c, i) => ({
       id: `${hash.slice(0, 12)}:${c.startLine}`,
@@ -66,6 +85,8 @@ export async function indexPath(
       endLine: c.endLine,
       text: c.text,
       vector: Array.from(vectors[i]),
+      symbolName: c.symbolName,
+      kind: c.kind,
     }));
     store.replaceFileChunks(file, chunks);
     store.setFileHash(file, hash);
@@ -77,6 +98,7 @@ export async function indexPath(
     filesIndexed,
     filesSkipped,
     chunksAdded,
+    symbolsAdded,
     embedder: embedder.name,
     elapsedMs: Date.now() - started,
   };
