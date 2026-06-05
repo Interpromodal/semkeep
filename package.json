@@ -5,7 +5,7 @@
   "type": "module",
   "homepage": "https://semkeep.com",
   "author": "John <john@buildreach.com> (https://semkeep.com)",
-  "funding": "https://venmo.com/insertcoin",
+  "funding": "https://venmo.com/u/InsertCoin",
   "bin": {
     "semkeep": "dist/server.js"
   },

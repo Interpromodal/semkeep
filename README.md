@@ -126,7 +126,7 @@ Architecture: `src/embeddings/*` (providers + detection), `src/store.ts` (storag
 
 ## Support
 
-semkeep is free and MIT-licensed. If it saves you time, you can drop a coin in the jar to fund maintenance and the next tool like this one: **[Venmo @insertcoin](https://venmo.com/insertcoin)**. 🙏
+semkeep is free and MIT-licensed. If it saves you time, you can drop a coin in the jar to fund maintenance and the next tool like this one: **[Venmo @InsertCoin](https://venmo.com/u/InsertCoin)**. 🙏
 
 ## License
 
