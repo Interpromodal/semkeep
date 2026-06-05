@@ -1,12 +1,8 @@
-// Placeholder — implemented in Task 5
+// CLI entry point for `semkeep import-cairn`: migrate a cairn store into semkeep's operational store.
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { homedir } from "node:os";
-
-function flag(a: string[], n: string): string | undefined {
-  const i = a.indexOf(n);
-  return i >= 0 ? a[i + 1] : undefined;
-}
+import { flag } from "./args.js";
 
 export async function importCairn(argv: string[]): Promise<void> {
   const from = resolve(flag(argv, "--from") ?? join(homedir(), ".cairn", "cairn.json"));
@@ -20,12 +16,17 @@ export async function importCairn(argv: string[]): Promise<void> {
     process.exitCode = 1;
     return;
   }
-  const src = JSON.parse(readFileSync(from, "utf8")) as {
-    projects?: Record<string, { markers: unknown[] }>;
-  };
-  const dst = existsSync(into)
-    ? JSON.parse(readFileSync(into, "utf8"))
-    : { version: 1, projects: {} };
+  let src: { projects?: Record<string, { markers: unknown[] }> };
+  try { src = JSON.parse(readFileSync(from, "utf8")); }
+  catch { console.error(`import-cairn: malformed JSON in ${from}`); process.exitCode = 1; return; }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let dst: { version: number; projects: Record<string, { markers: any[] }> };
+  if (existsSync(into)) {
+    try { dst = JSON.parse(readFileSync(into, "utf8")); }
+    catch { console.error(`import-cairn: malformed JSON in ${into}`); process.exitCode = 1; return; }
+  } else {
+    dst = { version: 1, projects: {} };
+  }
   let imported = 0;
   for (const [project, bucket] of Object.entries(src.projects ?? {})) {
     const target = (dst.projects[project] ??= { markers: [] });

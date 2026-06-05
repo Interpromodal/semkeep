@@ -23,7 +23,7 @@
     "build": "tsc",
     "prepublishOnly": "npm run build",
     "start": "node dist/cli.js",
-    "dev": "tsx src/server.ts",
+    "dev": "tsx src/cli.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

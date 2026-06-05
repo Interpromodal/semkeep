@@ -1,4 +1,4 @@
-// Placeholder — implemented in Task 4
+// CLI entry point for the `semkeep greenlight` subcommands (init / lint / run).
 import { writeFileSync, existsSync } from "node:fs";
 import { loadSpec, runSpec, lintSpec, renderHuman, renderJson } from "../greenlight/index.js";
 

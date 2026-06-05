@@ -1,4 +1,5 @@
-// Placeholder — implemented in Task 3
+// CLI formatters and handlers for the SessionStart and PreCompact hooks.
+import { flag } from "./args.js";
 import { OperationalStore } from "../operational/store.js";
 import { resolveProject, defaultOpsStorePath } from "../operational/paths.js";
 import { formatMarkers } from "../operational/format.js";
@@ -26,10 +27,6 @@ export function formatPreCompact(project: string, store: OperationalStore): stri
   return JSON.stringify({ hookSpecificOutput: { hookEventName: "PreCompact", additionalContext: text } });
 }
 
-function flag(argv: string[], name: string): string | undefined {
-  const i = argv.indexOf(name);
-  return i >= 0 ? argv[i + 1] : undefined;
-}
 function store(): OperationalStore {
   return new OperationalStore(defaultOpsStorePath());
 }

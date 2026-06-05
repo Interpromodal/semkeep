@@ -193,12 +193,10 @@ export async function unmarkTool(args: { id: string; project?: string }): Promis
 
 function describeCredentialSource(ctx: Context): string {
   const src = ctx.config.credentialSource;
-  if (src === "scoped-env") {
-    const which = process.env.SEMKEEP_OPENAI_API_KEY ? "SEMKEEP_OPENAI_API_KEY" : "SEMKEEP_VOYAGE_API_KEY";
-    return `scoped (${which})`;
-  }
-  if (src === "config-file") return "config-file (~/.semkeep/config.json)";
-  if (src === "inherited-env") return "inherited (SEMKEEP_INHERIT_ENV_KEYS=1 — ambient keys in use)";
+  const detail = ctx.config.credentialDetail;
+  if (src === "scoped-env") return `scoped (${detail ?? "SEMKEEP_OPENAI_API_KEY"})`;
+  if (src === "config-file") return `config-file (${detail ?? "~/.semkeep/config.json"})`;
+  if (src === "inherited-env") return `inherited (${detail ?? "SEMKEEP_INHERIT_ENV_KEYS"}=1 — ambient keys in use)`;
   return "none (local/lexical embedder only — ambient API keys are intentionally ignored)";
 }
 

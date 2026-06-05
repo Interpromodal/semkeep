@@ -13,6 +13,8 @@ export interface SemkeepConfig {
   refreshDebounceMs: number; // skip re-scan if freshened more recently than this
   /** Where the active API key came from (for status display). */
   credentialSource: "scoped-env" | "config-file" | "inherited-env" | "none";
+  /** Human-readable detail about the credential source (var name or path). Never contains key values. */
+  credentialDetail?: string;
 }
 
 function readUserConfig(): { openaiKey?: string; voyageKey?: string } {
@@ -35,12 +37,16 @@ export function loadConfig(
   const voyageKey = env.SEMKEEP_VOYAGE_API_KEY ?? fileCfg.voyageKey ?? (inheritEnv ? env.VOYAGE_API_KEY : undefined);
 
   let credentialSource: SemkeepConfig["credentialSource"] = "none";
+  let credentialDetail: string | undefined;
   if (env.SEMKEEP_OPENAI_API_KEY || env.SEMKEEP_VOYAGE_API_KEY) {
     credentialSource = "scoped-env";
+    credentialDetail = env.SEMKEEP_OPENAI_API_KEY ? "SEMKEEP_OPENAI_API_KEY" : "SEMKEEP_VOYAGE_API_KEY";
   } else if (fileCfg.openaiKey || fileCfg.voyageKey) {
     credentialSource = "config-file";
+    credentialDetail = "~/.semkeep/config.json";
   } else if (inheritEnv && (env.OPENAI_API_KEY || env.VOYAGE_API_KEY)) {
     credentialSource = "inherited-env";
+    credentialDetail = "SEMKEEP_INHERIT_ENV_KEYS";
   }
 
   return {
@@ -53,5 +59,6 @@ export function loadConfig(
     autoRefresh: env.SEMKEEP_AUTO_REFRESH !== "0" && env.SEMKEEP_AUTO_REFRESH !== "false",
     refreshDebounceMs: Number(env.SEMKEEP_REFRESH_DEBOUNCE_MS) || 1500,
     credentialSource,
+    credentialDetail,
   };
 }

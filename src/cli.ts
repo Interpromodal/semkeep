@@ -9,8 +9,8 @@ const USAGE = `Usage: semkeep [serve] | markers --hook | nudge --hook | greenlig
 async function main(): Promise<void> {
   const [cmd, ...rest] = process.argv.slice(2);
   switch (cmd) {
-    case undefined:
-      return serve(); // `npx -y semkeep` → MCP server
+    case undefined: case "serve":
+      return serve(); // `npx -y semkeep` or `semkeep serve` → MCP server
     case "markers":
       return sessionStartHook(rest); // SessionStart hook
     case "nudge":
