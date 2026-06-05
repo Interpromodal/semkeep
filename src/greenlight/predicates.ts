@@ -96,14 +96,14 @@ function getByPath(root: unknown, query: string): { value: unknown; error: strin
 }
 
 /**
- * Strict typed equality:
+ * Strict typed equality, key-order-independent for objects:
  * - bool is identity only (true !== 1, false !== 0)
  * - number === number (int/float unified in JS, so 1 === 1.0 naturally)
- * - everything else: deep JSON stringify comparison
+ * - string/null: by value
+ * - arrays: same length AND each element recursively deep-equal (order matters)
+ * - objects: same set of keys AND each value recursively deep-equal (key order ignored)
  *
- * Mirrors Python's:
- *   ok = value == expected and (type(value) == type(expected) or _numeric_match(value, expected))
- * where _numeric_match excludes bool.
+ * Mirrors Python's == on dicts/lists, which is structural and key-order-independent.
  */
 function jsonEquals(actual: unknown, expected: unknown): boolean {
   // bool: identity only (bool is NOT numeric)
@@ -114,8 +114,39 @@ function jsonEquals(actual: unknown, expected: unknown): boolean {
   if (typeof actual === "number" && typeof expected === "number") {
     return actual === expected;
   }
-  // strings, null, arrays, objects: deep comparison via JSON
-  return JSON.stringify(actual) === JSON.stringify(expected);
+  // null
+  if (actual === null || expected === null) {
+    return actual === expected;
+  }
+  // string
+  if (typeof actual === "string" || typeof expected === "string") {
+    return actual === expected;
+  }
+  // arrays: order matters, recurse element-by-element
+  if (Array.isArray(actual) && Array.isArray(expected)) {
+    if (actual.length !== expected.length) return false;
+    for (let i = 0; i < actual.length; i++) {
+      if (!jsonEquals(actual[i], expected[i])) return false;
+    }
+    return true;
+  }
+  // if one is array and the other is not, they differ
+  if (Array.isArray(actual) || Array.isArray(expected)) return false;
+  // objects: same key set, recurse per value (key-order-independent)
+  if (typeof actual === "object" && typeof expected === "object") {
+    const aObj = actual as Record<string, unknown>;
+    const eObj = expected as Record<string, unknown>;
+    const aKeys = Object.keys(aObj);
+    const eKeys = Object.keys(eObj);
+    if (aKeys.length !== eKeys.length) return false;
+    for (const key of aKeys) {
+      if (!(key in eObj)) return false;
+      if (!jsonEquals(aObj[key], eObj[key])) return false;
+    }
+    return true;
+  }
+  // fallback (should not be reached for valid JSON values)
+  return actual === expected;
 }
 
 // ---------------------------------------------------------------------------

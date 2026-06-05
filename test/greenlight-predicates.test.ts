@@ -340,6 +340,24 @@ describe("json_path", () => {
     );
     expect(r.ok).toBe(true);
   });
+
+  it("json_path object equality is key-order-independent: {b:2,a:1} equals {a:1,b:2}", () => {
+    // Positive case: key order in 'equals' differs from key order in actual JSON — must still pass
+    const r = evaluateAssertion(
+      { type: "json_path", query: "", equals: { b: 2, a: 1 } } as any,
+      ctx({ stdout: '{"a":1,"b":2}' })
+    );
+    expect(r.ok).toBe(true);
+  });
+
+  it("json_path object equality fails when a nested value differs", () => {
+    // Negative case: same keys but one nested value differs
+    const r = evaluateAssertion(
+      { type: "json_path", query: "", equals: { a: 1, b: 99 } } as any,
+      ctx({ stdout: '{"a":1,"b":2}' })
+    );
+    expect(r.ok).toBe(false);
+  });
 });
 
 // ---- dispatch -------------------------------------------------------

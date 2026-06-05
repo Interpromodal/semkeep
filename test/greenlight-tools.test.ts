@@ -72,7 +72,7 @@ describe("greenlight tools", () => {
     expect(out).toMatch(/No shallow-gate warnings/i);
   });
 
-  it("greenlight_run with strict flag appends strict warnings when gate is shallow", async () => {
+  it("greenlight_run with strict flag appends strict warnings when gate is shallow (exempt)", async () => {
     const spec = {
       checks: [
         {
@@ -86,5 +86,11 @@ describe("greenlight tools", () => {
     // strict_exempt suppresses warnings, so no strict warnings expected
     const out = await greenlightRunTool({ spec, strict: true });
     expect(out).toMatch(/GREEN/);
+  });
+
+  it("greenlight_run with strict:true appends shallow-gate warnings", async () => {
+    const spec = { checks: [{ name: "s", run: 'node -e "process.exit(0)"', assert: [{ type: "exit_code", equals: 0 }] }] };
+    const out = await greenlightRunTool({ spec, strict: true });
+    expect(out).toMatch(/only_exit_code/);
   });
 });

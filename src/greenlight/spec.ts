@@ -187,7 +187,7 @@ export function validateSpec(raw: unknown): string[] {
     const timeout_ms = checkObj["timeout_ms"];
     if (timeout_ms !== undefined) {
       const isNumericNonBool =
-        typeof timeout_ms === "number" && typeof timeout_ms !== "boolean" && !Number.isNaN(timeout_ms);
+        typeof timeout_ms === "number" && !Number.isNaN(timeout_ms);
       // bool is not allowed (bool is typeof 'boolean' in JS, but let's be explicit)
       if (typeof timeout_ms === "boolean" || !isNumericNonBool || (timeout_ms as number) <= 0) {
         errors.push(`${label}: 'timeout_ms' must be a positive number`);

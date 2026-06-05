@@ -306,7 +306,7 @@ export async function greenlightRunTool(
   if (args.strict) {
     const warns = lintSpec(spec);
     if (warns.length) {
-      out += "\n\nStrict warnings:\n" + warns.map((w) => `  - [${w.check}] ${w.message}`).join("\n");
+      out += "\n\nStrict warnings:\n" + warns.map((w) => `  - [${w.check}] (${w.rule}) ${w.message}`).join("\n");
     }
   }
   return out;
