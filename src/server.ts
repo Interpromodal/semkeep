@@ -78,10 +78,13 @@ server.registerTool(
 server.registerTool(
   "remember",
   {
-    description: "Store a durable working note. Semantic dedup avoids near-duplicates.",
+    description:
+      "Store a durable working note. Optionally anchor it to a symbol/file so it surfaces in define/outline. Semantic dedup avoids near-duplicates.",
     inputSchema: {
       text: z.string().describe("The note to remember"),
       tags: z.array(z.string()).optional().describe("Optional tags"),
+      symbol: z.string().optional().describe("Anchor the note to this symbol name"),
+      file: z.string().optional().describe("Anchor the note to this file"),
     },
   },
   async (args) => text(await rememberTool(await getContext(), args)),
