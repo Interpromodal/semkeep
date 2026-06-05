@@ -17,6 +17,39 @@ export interface Chunk {
   endLine: number; // 1-based, inclusive
   text: string;
   vector: number[]; // L2-normalized
+  symbolName?: string; // owning symbol, when chunked on a symbol boundary
+  kind?: SymbolKind;
+}
+
+export type SymbolKind =
+  | "function"
+  | "class"
+  | "method"
+  | "interface"
+  | "type"
+  | "enum"
+  | "const"
+  | "variable";
+
+/** A code symbol (definition) extracted from an AST. Named CodeSymbol to avoid
+ * shadowing JavaScript's global `Symbol`. */
+export interface CodeSymbol {
+  id: string; // `${fileHash.slice(0,12)}:${startLine}:${name}`
+  file: string;
+  name: string;
+  kind: SymbolKind;
+  startLine: number; // 1-based inclusive
+  endLine: number; // 1-based inclusive
+  exported: boolean;
+  container?: string; // enclosing symbol (e.g. the class of a method)
+  signature?: string; // first source line, trimmed, for display
+}
+
+/** A module import edge: `file` imports `names` from `source`. */
+export interface ImportEdge {
+  file: string; // importing file (absolute)
+  source: string; // module specifier, e.g. "./bar.js" or "zod"
+  names: string[]; // imported names, or ["*"] / ["default"]
 }
 
 /** A durable working note written by the agent. */
