@@ -42,3 +42,27 @@ test("empty index returns no hits (no crash)", async () => {
   const hits = await search(store, emb, "anything", { k: 5 });
   expect(hits).toEqual([]);
 });
+
+test("hybrid boost scans the FULL chunk text, not just the snippet", async () => {
+  // Stub embedder: any query -> [1,0,0]. Chunk vectors are set directly below.
+  const stub = {
+    name: "stub",
+    dim: 3,
+    async embed(texts: string[]) {
+      return texts.map(() => Float32Array.from([1, 0, 0]));
+    },
+  };
+  const store = await Store.load(mkdtempSync(join(tmpdir(), "mp-hy-")));
+  store.setEmbedderMeta(stub.name, stub.dim);
+  // B: higher cosine (1.0), but the keyword 'alpha' never appears.
+  store.replaceFileChunks("/r/b.ts", [
+    { id: "b", file: "/r/b.ts", startLine: 1, endLine: 3, text: "beta gamma\ndelta epsilon\nzeta eta", vector: [1, 0, 0] },
+  ]);
+  // A: lower cosine (0.8), and 'alpha' appears on line 5 — OUTSIDE the 3-line snippet.
+  store.replaceFileChunks("/r/a.ts", [
+    { id: "a", file: "/r/a.ts", startLine: 1, endLine: 5, text: "line one\nline two\nline three\nfiller line\nthe alpha keyword here", vector: [0.8, 0, 0] },
+  ]);
+  const hits = await search(store, stub as any, "alpha", { k: 2, mode: "hybrid" });
+  // Full-text boost must lift A (keyword deep in body) above B (higher cosine, no keyword).
+  expect(hits[0].file).toBe("/r/a.ts");
+});

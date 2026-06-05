@@ -1,5 +1,5 @@
 import type { EmbeddingProvider, SearchHit } from "./types.js";
-import { Store } from "./store.js";
+import { Store, type ScoredChunk } from "./store.js";
 import { tokenize } from "./embeddings/lexical.js";
 
 export interface SearchOptions {
@@ -29,24 +29,31 @@ export async function search(
   const [qv] = await embedder.embed([query]);
 
   // Over-fetch so the keyword re-rank can promote strong lexical matches.
-  const candidates = store.searchChunks(qv, k * 4, {
+  const candidates = store.searchChunkCandidates(qv, k * 4, {
     pathPrefix: opts.pathPrefix,
     ext: opts.ext,
   });
 
+  const strip = (c: ScoredChunk): SearchHit => {
+    const { text, ...hit } = c;
+    return hit;
+  };
+
   if (mode === "semantic" || candidates.length === 0) {
-    return candidates.slice(0, k);
+    return candidates.slice(0, k).map(strip);
   }
 
   const qTokens = new Set(tokenize(query));
-  if (qTokens.size === 0) return candidates.slice(0, k);
+  if (qTokens.size === 0) return candidates.slice(0, k).map(strip);
 
-  for (const hit of candidates) {
-    const hTokens = new Set(tokenize(hit.snippet));
+  for (const c of candidates) {
+    // Scan the FULL chunk text, not just the snippet — an exact keyword match
+    // deep in a chunk is a strong signal the semantic vector may under-weight.
+    const cTokens = new Set(tokenize(c.text));
     let shared = 0;
-    for (const t of qTokens) if (hTokens.has(t)) shared++;
-    hit.score += (shared / qTokens.size) * KEYWORD_WEIGHT;
+    for (const t of qTokens) if (cTokens.has(t)) shared++;
+    c.score += (shared / qTokens.size) * KEYWORD_WEIGHT;
   }
   candidates.sort((a, b) => b.score - a.score);
-  return candidates.slice(0, k);
+  return candidates.slice(0, k).map(strip);
 }

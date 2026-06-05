@@ -3,6 +3,9 @@ import { join } from "node:path";
 import { createHash } from "node:crypto";
 import type { Chunk, Note, SearchHit, StoreData } from "./types.js";
 
+/** A scored chunk that still carries its full text (for hybrid re-ranking). */
+export type ScoredChunk = SearchHit & { text: string };
+
 const STORE_VERSION = 1;
 const DEFAULT_DEDUP_THRESHOLD = 0.97;
 
@@ -81,11 +84,11 @@ export class Store {
     this.data.chunks.push(...chunks);
   }
 
-  searchChunks(
+  private rankChunks(
     q: number[] | Float32Array,
     k: number,
     filter?: { pathPrefix?: string; ext?: string[] },
-  ): SearchHit[] {
+  ): ScoredChunk[] {
     const exts = filter?.ext?.map((e) => (e.startsWith(".") ? e : "." + e).toLowerCase());
     let pool = this.data.chunks;
     if (filter?.pathPrefix) pool = pool.filter((c) => c.file.startsWith(filter.pathPrefix!));
@@ -97,9 +100,28 @@ export class Store {
         endLine: c.endLine,
         score: dot(q, c.vector),
         snippet: snippetOf(c.text),
+        text: c.text,
       }))
       .sort((a, b) => b.score - a.score)
       .slice(0, k);
+  }
+
+  /** Top-k chunks by cosine similarity (public result shape — snippet only). */
+  searchChunks(
+    q: number[] | Float32Array,
+    k: number,
+    filter?: { pathPrefix?: string; ext?: string[] },
+  ): SearchHit[] {
+    return this.rankChunks(q, k, filter).map(({ text, ...hit }) => hit);
+  }
+
+  /** Top-k chunks WITH full text, so the search layer can re-rank (hybrid). */
+  searchChunkCandidates(
+    q: number[] | Float32Array,
+    k: number,
+    filter?: { pathPrefix?: string; ext?: string[] },
+  ): ScoredChunk[] {
+    return this.rankChunks(q, k, filter);
   }
 
   addNote(
