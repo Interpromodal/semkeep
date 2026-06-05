@@ -22,6 +22,16 @@ test("imports/prologue before the first symbol become a fallback chunk", async (
   expect(chunks.some((c) => c.symbolName === "a")).toBe(true);
 });
 
+test("methods are chunked individually, not buried in a class blob", async () => {
+  const src = "export class Store {\n  alpha(){ return 1 }\n  beta(){ return 2 }\n}\n";
+  const { tree } = (await parseFile("m.ts", src))!;
+  const chunks = symbolChunks(src, extractSymbols(tree, "/m.ts", "h"));
+  const names = chunks.map((c) => c.symbolName).filter(Boolean);
+  expect(names).toContain("alpha");
+  expect(names).toContain("beta");
+  expect(chunks.find((c) => c.symbolName === "alpha")!.kind).toBe("method");
+});
+
 test("falls back to line windows when there are no symbols", () => {
   const text = Array.from({ length: 120 }, (_, i) => `L${i + 1}`).join("\n");
   expect(symbolChunks(text, [])).toEqual(chunkText(text));

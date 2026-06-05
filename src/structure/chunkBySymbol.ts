@@ -1,4 +1,4 @@
-import type { CodeSymbol } from "../types.js";
+import type { CodeSymbol, SymbolKind } from "../types.js";
 import { chunkText, type RawChunk } from "../chunker.js";
 
 const MAX_SYMBOL_LINES = 60;
@@ -13,11 +13,11 @@ function offset(chunks: RawChunk[], base: number): RawChunk[] {
 }
 
 /**
- * Chunk a file on symbol boundaries: one chunk per top-level symbol (methods
- * are covered by their class). Oversized symbols are split into line-windows
- * within their range; lines not covered by any symbol (imports/prologue/loose
- * code) become fallback line-window chunks. With no symbols, defers entirely to
- * the line-window chunker.
+ * Chunk a file on symbol boundaries. Each top-level symbol is a chunk; a class
+ * is split further — a header chunk plus one chunk PER METHOD — so method-level
+ * detail isn't buried in a single class blob. Oversized units split into
+ * line-windows; gaps (imports/prologue/loose code) become line-window chunks.
+ * With no symbols, defers entirely to the line-window chunker.
  */
 export function symbolChunks(
   text: string,
@@ -30,25 +30,43 @@ export function symbolChunks(
   const out: RawChunk[] = [];
   let cursor = 1; // next uncovered file line (1-based)
 
+  const emit = (startLine: number, endLine: number, name?: string, kind?: SymbolKind) => {
+    if (endLine < startLine) return;
+    const body = lines.slice(startLine - 1, endLine).join("\n");
+    if (!body.trim()) return;
+    if (endLine - startLine + 1 > maxLines) {
+      out.push(...offset(chunkText(body), startLine).map((c) => ({ ...c, symbolName: name, kind })));
+    } else {
+      out.push({ startLine, endLine, text: body, symbolName: name, kind });
+    }
+  };
+
   for (const s of tops) {
     if (s.startLine < cursor) continue; // overlapping/nested — already covered
     if (s.startLine > cursor) {
-      const gap = lines.slice(cursor - 1, s.startLine - 1).join("\n");
-      out.push(...offset(chunkText(gap), cursor));
+      out.push(...offset(chunkText(lines.slice(cursor - 1, s.startLine - 1).join("\n")), cursor));
     }
-    const body = lines.slice(s.startLine - 1, s.endLine).join("\n");
-    const span = s.endLine - s.startLine + 1;
-    if (span > maxLines) {
-      out.push(...offset(chunkText(body), s.startLine).map((c) => ({ ...c, symbolName: s.name, kind: s.kind })));
-    } else if (body.trim()) {
-      out.push({ startLine: s.startLine, endLine: s.endLine, text: body, symbolName: s.name, kind: s.kind });
+
+    const methods = symbols
+      .filter((m) => m.container === s.name && m.startLine >= s.startLine && m.endLine <= s.endLine)
+      .sort((a, b) => a.startLine - b.startLine);
+
+    if (s.kind === "class" && methods.length > 0) {
+      let mcursor = s.startLine;
+      for (const m of methods) {
+        if (m.startLine > mcursor) emit(mcursor, m.startLine - 1, s.name, s.kind); // header / between methods
+        emit(m.startLine, m.endLine, m.name, "method");
+        mcursor = m.endLine + 1;
+      }
+      if (mcursor <= s.endLine) emit(mcursor, s.endLine, s.name, s.kind); // trailing class body
+    } else {
+      emit(s.startLine, s.endLine, s.name, s.kind);
     }
     cursor = s.endLine + 1;
   }
 
   if (cursor <= lines.length) {
-    const gap = lines.slice(cursor - 1).join("\n");
-    out.push(...offset(chunkText(gap), cursor));
+    out.push(...offset(chunkText(lines.slice(cursor - 1).join("\n")), cursor));
   }
   return out;
 }
