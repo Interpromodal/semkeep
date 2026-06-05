@@ -1,0 +1,31 @@
+{
+  "name": "semkeep build + test gate",
+  "checks": [
+    {
+      "name": "typecheck-build",
+      "run": "npm run build",
+      "assert": [
+        { "type": "exit_code", "equals": 0 },
+        { "type": "file_exists", "path": "dist/cli.js" },
+        { "type": "file_exists", "path": "dist/server.js" }
+      ]
+    },
+    {
+      "name": "unit-tests",
+      "run": "npm test",
+      "timeout_ms": 180000,
+      "assert": [
+        { "type": "exit_code", "equals": 0 },
+        { "type": "stdout_contains", "value": "passed" }
+      ]
+    },
+    {
+      "name": "cli-dispatcher",
+      "run": "node dist/cli.js --help",
+      "assert": [
+        { "type": "exit_code", "equals": 0 },
+        { "type": "stdout_contains", "value": "Usage" }
+      ]
+    }
+  ]
+}

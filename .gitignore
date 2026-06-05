@@ -24,3 +24,4 @@ Thumbs.db
 
 # Local launch/article assets (published to Substack; kept out of the public repo)
 docs/launch/
+bench/

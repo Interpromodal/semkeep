@@ -5,6 +5,11 @@ import { Store } from "./store.js";
 import { indexPath } from "./indexer.js";
 import { search } from "./search.js";
 import { freshen } from "./freshen.js";
+import { OperationalStore, type MarkInput, type RecallFilter } from "./operational/store.js";
+import { resolveProject, defaultOpsStorePath } from "./operational/paths.js";
+import { formatMarkers, formatMark } from "./operational/format.js";
+import type { MarkerKind } from "./operational/types.js";
+import { loadSpec, runSpec, lintSpec, renderHuman } from "./greenlight/index.js";
 
 export interface Context {
   store: Store;
@@ -17,7 +22,9 @@ const PROTOCOL =
   "Prefer `search` for meaning-based code lookup (you don't need the exact identifier); " +
   "scope with pathPrefix/ext to sharpen results; use Grep only for exact strings. " +
   "For structural questions use define (where is X defined), outline (what's in this file), " +
-  "callers (who calls X), imports (dependency edges). Use remember/recall for durable notes.";
+  "callers (who calls X), imports (dependency edges). " +
+  "Use remember/recall for durable semantic notes; use mark/markers for verified " +
+  "operational memory (recipes/gotchas/dead-ends, per project); use greenlight_run to prove a task is done.";
 
 // Debounced auto-freshen state, per server process.
 let lastFreshenAt = 0;
@@ -157,17 +164,63 @@ export async function forgetTool(ctx: Context, args: { id: string }): Promise<st
   return ok ? `Forgot ${args.id}.` : `No note with id ${args.id}.`;
 }
 
+function opsStore(): OperationalStore {
+  return new OperationalStore(defaultOpsStorePath());
+}
+
+export async function markTool(
+  args: { kind: MarkerKind; title: string; project?: string } & Omit<MarkInput, "kind" | "title">,
+): Promise<string> {
+  const project = resolveProject(args.project);
+  const { kind, title, body, command, cwd, exitCode, tags } = args;
+  const r = opsStore().mark(project, { kind, title, body, command, cwd, exitCode, tags });
+  return formatMark(project, r);
+}
+
+export async function markersTool(
+  args: { project?: string; query?: string; kind?: MarkerKind; includeStale?: boolean },
+): Promise<string> {
+  const project = resolveProject(args.project);
+  const filter: RecallFilter = { query: args.query, kind: args.kind, includeStale: args.includeStale };
+  return formatMarkers(project, opsStore().recall(project, filter));
+}
+
+export async function unmarkTool(args: { id: string; project?: string }): Promise<string> {
+  const project = resolveProject(args.project);
+  const ok = opsStore().forget(project, args.id);
+  return ok ? `Forgot marker ${args.id} for ${project}.` : `No marker ${args.id} found for ${project}.`;
+}
+
+function describeCredentialSource(ctx: Context): string {
+  const src = ctx.config.credentialSource;
+  const detail = ctx.config.credentialDetail;
+  if (src === "scoped-env") return `scoped (${detail ?? "SEMKEEP_OPENAI_API_KEY"})`;
+  if (src === "config-file") return `config-file (${detail ?? "~/.semkeep/config.json"})`;
+  if (src === "inherited-env") return `inherited (${detail ?? "SEMKEEP_INHERIT_ENV_KEYS"}=1 — ambient keys in use)`;
+  return "none (local/lexical embedder only — ambient API keys are intentionally ignored)";
+}
+
 export function statusTool(ctx: Context): string {
   const s = ctx.store.stats();
   const degradedNote = ctx.degraded
     ? " — DEGRADED lexical fallback; add OPENAI_API_KEY/VOYAGE_API_KEY, run Ollama, or install @huggingface/transformers for true semantic search"
     : "";
+  const opsPath = defaultOpsStorePath();
+  let opsLine = `operational: (unavailable) — ${opsPath}`;
+  try {
+    const opsCount = new OperationalStore(opsPath).recall(resolveProject(), { includeStale: true }).length;
+    opsLine = `operational: ${opsCount} marker(s) for this project — ${opsPath}`;
+  } catch {
+    /* corrupt/unreadable operational store — status stays informational */
+  }
   return [
     `embedder: ${s.embedder || ctx.embedder.name} (dim ${s.dim || ctx.embedder.dim})${degradedNote}`,
+    `credentials: ${describeCredentialSource(ctx)}`,
     `indexed: ${s.fileCount} files, ${s.chunkCount} chunks`,
     `structure: ${s.symbolCount} symbols, ${s.importCount} imports`,
     `roots: ${ctx.store.roots().length} (auto-refresh ${ctx.config.autoRefresh ? "on" : "off"})`,
     `notes: ${s.noteCount}`,
+    opsLine,
     `dataDir: ${ctx.config.dataDir}`,
     `protocol: ${PROTOCOL}`,
   ].join("\n");
@@ -248,4 +301,33 @@ export async function importsTool(
     );
   }
   return parts.join("\n\n");
+}
+
+// ---------------------------------------------------------------------------
+// Greenlight tools
+// ---------------------------------------------------------------------------
+
+export async function greenlightRunTool(
+  args: { spec?: unknown; spec_path?: string; cwd?: string; only?: string[]; strict?: boolean },
+): Promise<string> {
+  const spec = loadSpec({ spec: args.spec, specPath: args.spec_path });
+  const report = runSpec(spec, { cwd: args.cwd, only: args.only });
+  let out = renderHuman(report);
+  if (args.strict) {
+    const warns = lintSpec(spec);
+    if (warns.length) {
+      out += "\n\nStrict warnings:\n" + warns.map((w) => `  - [${w.check}] (${w.rule}) ${w.message}`).join("\n");
+    }
+  }
+  return out;
+}
+
+export async function greenlightLintTool(
+  args: { spec?: unknown; spec_path?: string },
+): Promise<string> {
+  const spec = loadSpec({ spec: args.spec, specPath: args.spec_path });
+  const warns = lintSpec(spec);
+  return warns.length
+    ? "Shallow-gate warnings:\n" + warns.map((w) => `  - [${w.check}] (${w.rule}) ${w.message}`).join("\n")
+    : "No shallow-gate warnings — the spec's checks assert real behavior.";
 }

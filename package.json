@@ -14,7 +14,7 @@
     "url": "https://github.com/Interpromodal/semkeep/issues"
   },
   "bin": {
-    "semkeep": "dist/server.js"
+    "semkeep": "dist/cli.js"
   },
   "files": [
     "dist"
@@ -22,8 +22,8 @@
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "start": "node dist/server.js",
-    "dev": "tsx src/server.ts",
+    "start": "node dist/cli.js",
+    "dev": "tsx src/cli.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
