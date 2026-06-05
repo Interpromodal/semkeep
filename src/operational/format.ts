@@ -24,7 +24,10 @@ export function formatMarkers(project: string, markers: MarkerView[]): string {
     );
   }
   const byKind = new Map<Marker["kind"], MarkerView[]>();
-  for (const m of markers) (byKind.get(m.kind) ?? byKind.set(m.kind, []).get(m.kind)!).push(m);
+  for (const m of markers) {
+    if (!byKind.has(m.kind)) byKind.set(m.kind, []);
+    byKind.get(m.kind)!.push(m);
+  }
   const sections: string[] = [`# semkeep operational memory for ${project}`, `${markers.length} marker(s).`];
   for (const kind of KIND_ORDER) {
     const group = byKind.get(kind);

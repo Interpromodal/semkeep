@@ -195,15 +195,21 @@ export function statusTool(ctx: Context): string {
   const degradedNote = ctx.degraded
     ? " — DEGRADED lexical fallback; add OPENAI_API_KEY/VOYAGE_API_KEY, run Ollama, or install @huggingface/transformers for true semantic search"
     : "";
-  const ops = new OperationalStore(defaultOpsStorePath());
-  const opsCount = ops.recall(resolveProject(), { includeStale: true }).length;
+  const opsPath = defaultOpsStorePath();
+  let opsLine = `operational: (unavailable) — ${opsPath}`;
+  try {
+    const opsCount = new OperationalStore(opsPath).recall(resolveProject(), { includeStale: true }).length;
+    opsLine = `operational: ${opsCount} marker(s) for this project — ${opsPath}`;
+  } catch {
+    /* corrupt/unreadable operational store — status stays informational */
+  }
   return [
     `embedder: ${s.embedder || ctx.embedder.name} (dim ${s.dim || ctx.embedder.dim})${degradedNote}`,
     `indexed: ${s.fileCount} files, ${s.chunkCount} chunks`,
     `structure: ${s.symbolCount} symbols, ${s.importCount} imports`,
     `roots: ${ctx.store.roots().length} (auto-refresh ${ctx.config.autoRefresh ? "on" : "off"})`,
     `notes: ${s.noteCount}`,
-    `operational: ${opsCount} marker(s) for this project — ${defaultOpsStorePath()}`,
+    opsLine,
     `dataDir: ${ctx.config.dataDir}`,
     `protocol: ${PROTOCOL}`,
   ].join("\n");
