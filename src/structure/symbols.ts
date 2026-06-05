@@ -1,5 +1,5 @@
 import type Parser from "web-tree-sitter";
-import type { CodeSymbol, ImportEdge, SymbolKind } from "../types.js";
+import type { CodeSymbol, ImportEdge, Reference, SymbolKind } from "../types.js";
 
 const KIND_BY_TYPE: Record<string, SymbolKind> = {
   function_declaration: "function",
@@ -119,5 +119,39 @@ export function extractImports(tree: Parser.Tree, file: string): ImportEdge[] {
     }
     out.push({ file, source: unquote(source), names });
   }
+  return out;
+}
+
+/**
+ * Extract call/instantiation sites — the callee name of each call_expression /
+ * new_expression. Identifier-aware (from AST nodes), so strings and comments are
+ * never matched. This powers `callers`.
+ */
+export function extractReferences(tree: Parser.Tree, file: string): Reference[] {
+  const out: Reference[] = [];
+  const seen = new Set<string>();
+  const visit = (node: Parser.SyntaxNode) => {
+    if (node.type === "call_expression" || node.type === "new_expression") {
+      const callee =
+        node.childForFieldName("function") ?? node.childForFieldName("constructor");
+      let name: string | undefined;
+      if (callee) {
+        if (callee.type === "identifier") name = callee.text;
+        else if (callee.type === "member_expression") {
+          name = callee.childForFieldName("property")?.text;
+        }
+      }
+      if (name) {
+        const line = node.startPosition.row + 1;
+        const key = `${name}:${line}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          out.push({ file, name, line });
+        }
+      }
+    }
+    for (const c of node.namedChildren) visit(c);
+  };
+  visit(tree.rootNode);
   return out;
 }

@@ -52,6 +52,14 @@ export interface ImportEdge {
   names: string[]; // imported names, or ["*"] / ["default"]
 }
 
+/** A call/usage site of a named symbol (for `callers`). Identifier-aware: only
+ * collected from call/new expression callees, so strings/comments are excluded. */
+export interface Reference {
+  file: string;
+  name: string;
+  line: number; // 1-based
+}
+
 /** A durable working note written by the agent. */
 export interface Note {
   id: string; // `n_<sha1[0..10]>`
@@ -67,6 +75,9 @@ export interface StoreData {
   files: Record<string, string>; // path -> contentHash, for skip-unchanged
   chunks: Chunk[];
   notes: Note[];
+  symbols: CodeSymbol[];
+  imports: ImportEdge[];
+  references: Reference[];
 }
 
 /** A ranked code search result. */
