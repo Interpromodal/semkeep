@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>semkeep — grep finds strings, semkeep finds meaning</title>
+<meta name="description" content="semkeep is a local, open-source MCP server that gives AI coding agents semantic + structural code intelligence: search code by meaning, jump to definitions, see who-calls-what, with an auto-fresh index and notes anchored to symbols. No API key, runs on your machine." />
+<link rel="canonical" href="https://semkeep.com/" />
+<meta name="robots" content="index,follow,max-image-preview:large" />
+<meta name="theme-color" content="#0b0d10" />
+<meta name="author" content="semkeep" />
+<meta name="keywords" content="semkeep, MCP server, semantic code search, code intelligence, tree-sitter, AI coding agent, Claude Code, code search, embeddings, model context protocol" />
+
+<!-- Open Graph / Twitter -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="semkeep" />
+<meta property="og:title" content="semkeep — grep finds strings, semkeep finds meaning" />
+<meta property="og:description" content="Local, open-source MCP server: semantic + structural code intelligence for AI agents. Search by meaning, jump to definitions, who-calls-what, auto-fresh index. No API key." />
+<meta property="og:url" content="https://semkeep.com/" />
+<meta property="og:image" content="https://semkeep.com/og.svg" />
+<meta property="og:image:type" content="image/svg+xml" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="semkeep — grep finds strings, semkeep finds meaning" />
+<meta name="twitter:description" content="Local, open-source MCP server: semantic + structural code intelligence for AI agents. No API key." />
+<meta name="twitter:image" content="https://semkeep.com/og.svg" />
+
+<!-- Structured data: SoftwareApplication (AEO) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "semkeep",
+  "alternateName": "semkeep MCP server",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Windows, macOS, Linux",
+  "url": "https://semkeep.com/",
+  "downloadUrl": "https://www.npmjs.com/package/semkeep",
+  "softwareVersion": "1.0.0",
+  "license": "https://opensource.org/licenses/MIT",
+  "description": "A local, open-source Model Context Protocol (MCP) server that gives AI coding agents semantic and structural code intelligence: search code by meaning, jump to definitions, find call sites, map imports, with an auto-refreshing index and notes anchored to symbols. Runs on-device with no API key required.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "featureList": [
+    "Semantic code search (find by meaning, not exact string)",
+    "Structural intelligence: define, callers, outline, imports (tree-sitter)",
+    "Auto-fresh index: reflects edits, additions, and deletions on query",
+    "Notes anchored to symbols",
+    "Local and offline-capable; no API key required"
+  ]
+}
+</script>
+
+<!-- Structured data: FAQPage (AEO) -->
+<script type="application/ld+json" id="faq-jsonld">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "What is semkeep?",
+      "acceptedAnswer": { "@type": "Answer", "text": "semkeep is a local, open-source MCP (Model Context Protocol) server that gives AI coding agents semantic and structural understanding of a codebase. It lets an agent search code by meaning, jump to where a symbol is defined, find who calls it, map a file's imports, and keep durable notes anchored to symbols." } },
+    { "@type": "Question", "name": "How is semkeep different from grep or ripgrep?",
+      "acceptedAnswer": { "@type": "Answer", "text": "grep matches exact strings and regex. semkeep matches by meaning ('where is the retry logic?' finds backoffScheduler even if those words never appear) and by structure (jump to a definition, list call sites). It is a complement to grep, not a replacement: use grep for exact strings, semkeep when you do not know the exact term or need code relationships." } },
+    { "@type": "Question", "name": "Is my code sent anywhere?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. semkeep runs entirely on your machine. By default it embeds and indexes code on-device with a bundled local model, so your code never leaves your computer. You can optionally point it at an API or a local Ollama instance, but nothing is sent anywhere unless you configure it." } },
+    { "@type": "Question", "name": "Does semkeep need an API key?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. semkeep auto-detects the best available embedding backend in order: an API key if you have one, a local Ollama server, a bundled on-device model, and finally a deterministic lexical fallback that always works offline. It runs with zero configuration and no API key." } },
+    { "@type": "Question", "name": "Which languages does semkeep support?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Structural features (define, callers, outline, imports, symbol-aware chunking) support TypeScript, JavaScript, TSX, and JSX today, with the parser designed to add more languages easily. Semantic search works over any text file, including docs and Markdown." } },
+    { "@type": "Question", "name": "How does the index stay fresh?",
+      "acceptedAnswer": { "@type": "Answer", "text": "semkeep keeps itself current with lazy freshen-on-query: before each code query it does a fast file-stat scan of the indexed folders, re-embeds changed files, indexes new ones, and prunes deleted ones. You never have to manually re-index after editing." } },
+    { "@type": "Question", "name": "What is MCP (Model Context Protocol)?",
+      "acceptedAnswer": { "@type": "Answer", "text": "MCP is an open standard for connecting AI assistants to tools and data sources. An MCP server like semkeep exposes tools (search, define, callers, and more) that an MCP-compatible agent such as Claude Code can call. semkeep installs as an MCP server or a Claude Code plugin." } },
+    { "@type": "Question", "name": "Is semkeep free?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. semkeep is free and MIT-licensed. If it saves you time, there is an optional tip jar to help fund development and future tools." } },
+    { "@type": "Question", "name": "How do I install semkeep?",
+      "acceptedAnswer": { "@type": "Answer", "text": "With Claude Code, run: claude mcp add semkeep -- npx -y semkeep. Or install it as a Claude Code plugin from the semkeep marketplace. Then index a folder and start searching by meaning. It requires Node.js 18 or newer." } }
+  ]
+}
+</script>
+
+<style>
+  :root{
+    --bg:#0b0d10; --bg-2:#11141a; --panel:#141923; --line:#222a36;
+    --ink:#e8edf4; --muted:#9aa7ba; --faint:#6b788c;
+    --gold:#f5b73f; --gold-2:#ffd27a; --match:#7ee2b8;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(900px 500px at 80% -10%, rgba(245,183,63,.08), transparent 60%),
+      radial-gradient(700px 500px at 0% 10%, rgba(126,226,184,.05), transparent 55%);}
+  a{color:inherit}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  .mono{font-family:var(--mono)}
+  .gold{color:var(--gold)}
+  /* nav */
+  header.nav{position:sticky;top:0;z-index:20;backdrop-filter:blur(8px);
+    background:rgba(11,13,16,.72);border-bottom:1px solid var(--line)}
+  .nav-in{display:flex;align-items:center;justify-content:space-between;height:60px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.02em}
+  .brand .dot{width:11px;height:11px;border-radius:3px;background:var(--gold);box-shadow:0 0 18px rgba(245,183,63,.6)}
+  .nav-links{display:flex;gap:22px;align-items:center;font-size:14px;color:var(--muted)}
+  .nav-links a:hover{color:var(--ink)}
+  .btn{display:inline-flex;align-items:center;gap:8px;border-radius:10px;padding:10px 16px;
+    font-weight:600;font-size:14px;text-decoration:none;border:1px solid transparent;cursor:pointer}
+  .btn-gold{background:var(--gold);color:#1a1407;box-shadow:0 6px 22px rgba(245,183,63,.25)}
+  .btn-gold:hover{background:var(--gold-2)}
+  .btn-ghost{border-color:var(--line);color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+  @media(max-width:680px){.nav-links a:not(.btn){display:none}}
+  /* hero */
+  .hero{padding:84px 0 40px;text-align:center}
+  .eyebrow{display:inline-flex;gap:8px;align-items:center;font-family:var(--mono);font-size:12.5px;
+    color:var(--gold);border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 14px;letter-spacing:.02em}
+  h1{font-size:clamp(34px,6vw,62px);line-height:1.04;letter-spacing:-.03em;margin:24px 0 0;font-weight:800}
+  h1 .sub{color:var(--gold)}
+  .lede{max-width:680px;margin:22px auto 0;color:var(--muted);font-size:clamp(16px,2.2vw,19px)}
+  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:30px}
+  .cmd{margin:34px auto 0;max-width:560px;display:flex;align-items:center;gap:12px;
+    background:#0e1218;border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-family:var(--mono);font-size:14px;text-align:left}
+  .cmd code{color:var(--ink);overflow:auto;white-space:nowrap}
+  .cmd .prompt{color:var(--match)}
+  .copy{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);
+    border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:var(--mono)}
+  .copy:hover{border-color:var(--gold);color:var(--gold)}
+  /* sections */
+  section{padding:54px 0;border-top:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:12.5px;color:var(--faint);letter-spacing:.08em;text-transform:uppercase}
+  h2{font-size:clamp(24px,3.4vw,34px);letter-spacing:-.02em;margin:10px 0 6px;font-weight:750}
+  .section-lede{color:var(--muted);max-width:640px}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:30px}
+  @media(max-width:680px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px}
+  .card h3{margin:0 0 6px;font-size:18px;letter-spacing:-.01em}
+  .card p{margin:0;color:var(--muted);font-size:15px}
+  .card .ic{font-family:var(--mono);color:var(--gold);font-size:13px;border:1px solid var(--line);
+    border-radius:8px;padding:3px 8px;display:inline-block;margin-bottom:14px;background:#0e1218}
+  /* terminal demo */
+  .term{background:#0e1218;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:26px}
+  .term-bar{display:flex;gap:7px;padding:13px 16px;border-bottom:1px solid var(--line)}
+  .term-bar i{width:11px;height:11px;border-radius:50%;display:inline-block;background:#2a3340}
+  .term-body{padding:18px 20px;font-family:var(--mono);font-size:13.5px;line-height:1.85;overflow:auto}
+  .term-body .u{color:var(--gold)}
+  .term-body .c{color:var(--faint)}
+  .term-body .m{color:var(--match)}
+  .term-body .p{color:var(--muted)}
+  /* compare */
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:26px}
+  @media(max-width:680px){.compare{grid-template-columns:1fr}}
+  .compare .col{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px}
+  .compare h4{margin:0 0 12px;font-family:var(--mono);font-size:13px;letter-spacing:.04em;color:var(--muted)}
+  .compare li{color:var(--muted);font-size:14.5px;margin:8px 0;list-style:none;padding-left:22px;position:relative}
+  .compare li:before{content:"›";position:absolute;left:4px;color:var(--gold)}
+  /* install */
+  .install ol{counter-reset:s;list-style:none;padding:0;margin:26px 0 0}
+  .install li{position:relative;padding:0 0 22px 44px;border-left:1px solid var(--line);margin-left:14px}
+  .install li:last-child{border-left:0}
+  .install li:before{counter-increment:s;content:counter(s);position:absolute;left:-15px;top:-2px;
+    width:30px;height:30px;border-radius:8px;background:var(--panel);border:1px solid var(--line);
+    color:var(--gold);font-family:var(--mono);font-size:14px;display:grid;place-items:center}
+  .install h3{margin:0 0 8px;font-size:16px}
+  .install pre{background:#0e1218;border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+    font-family:var(--mono);font-size:13.5px;overflow:auto;margin:0;color:var(--ink)}
+  .install p{color:var(--muted);font-size:14.5px;margin:8px 0 0}
+  /* faq */
+  details{border:1px solid var(--line);border-radius:12px;background:var(--panel);margin:12px 0;overflow:hidden}
+  summary{cursor:pointer;padding:18px 20px;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:16px;align-items:center}
+  summary::-webkit-details-marker{display:none}
+  summary .plus{color:var(--gold);font-family:var(--mono);transition:transform .2s}
+  details[open] summary .plus{transform:rotate(45deg)}
+  details .a{padding:0 20px 20px;color:var(--muted);font-size:15px}
+  /* tip */
+  .tip{text-align:center;background:linear-gradient(180deg,rgba(245,183,63,.07),transparent);
+    border:1px solid var(--line);border-radius:20px;padding:44px 24px;margin-top:10px}
+  .tip h2{margin-top:0}
+  .coin{font-size:34px}
+  /* footer */
+  footer{border-top:1px solid var(--line);padding:34px 0;color:var(--faint);font-size:13.5px}
+  .foot-in{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center}
+  .foot-in a{color:var(--muted)}
+  .foot-in a:hover{color:var(--gold)}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;
+    background:var(--gold);color:#1a1407;font-weight:600;font-size:13px;padding:9px 16px;border-radius:10px;
+    transition:.25s;pointer-events:none;font-family:var(--mono)}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<a href="#main" style="position:absolute;left:-999px">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <div class="brand"><span class="dot"></span> semkeep</div>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#features">Features</a>
+      <a href="#compare">vs grep</a>
+      <a href="#install">Install</a>
+      <a href="#faq">FAQ</a>
+      <a class="btn btn-ghost" href="https://www.npmjs.com/package/semkeep" rel="noopener">npm ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+<section class="hero" style="border-top:0">
+  <div class="wrap">
+    <span class="eyebrow">◆ MCP server · local · open source</span>
+    <h1>grep finds strings.<br><span class="sub">semkeep finds meaning.</span></h1>
+    <p class="lede">Semantic <strong>and</strong> structural code intelligence for your AI coding agent. Search code by intent, jump to definitions, see who‑calls‑what — with an index that keeps itself fresh. Runs locally. No API key.</p>
+    <div class="cta">
+      <a class="btn btn-gold" href="#install">Get started</a>
+      <a class="btn btn-ghost" href="#compare">How it compares</a>
+    </div>
+    <div class="cmd">
+      <span class="prompt mono">$</span>
+      <code id="hero-cmd">claude mcp add semkeep -- npx -y semkeep</code>
+      <button class="copy" data-copy="claude mcp add semkeep -- npx -y semkeep">copy</button>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="kicker">What it does</div>
+    <h2>Four ways to know your codebase</h2>
+    <p class="section-lede">Built on the same insight, four times over: an agent shouldn't have to know the exact identifier to find the right code.</p>
+    <div class="grid">
+      <div class="card">
+        <span class="ic">search</span>
+        <h3>Find by meaning</h3>
+        <p>Ask "where's the retry logic?" and get the function that defines <span class="mono gold">backoffScheduler</span> — even though none of those words appear in it. Semantic search over code and docs.</p>
+      </div>
+      <div class="card">
+        <span class="ic">define · callers · outline · imports</span>
+        <h3>Understand structure</h3>
+        <p>Real tree‑sitter ASTs. Jump to where a symbol is defined, list every call site, see a file's shape, map its dependency edges — answers grep simply can't give.</p>
+      </div>
+      <div class="card">
+        <span class="ic">freshness</span>
+        <h3>Always fresh</h3>
+        <p>Edit, add, or delete files and just keep working. semkeep re‑indexes changed files and prunes deleted ones automatically on your next query. No manual re‑index, ever.</p>
+      </div>
+      <div class="card">
+        <span class="ic">remember · recall</span>
+        <h3>Notes that live with code</h3>
+        <p>Anchor a note to a symbol — "this path drops events under load" — and it surfaces whenever you <span class="mono gold">define</span> or <span class="mono gold">outline</span> that code. Durable across refactors.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">See it</div>
+    <h2>Knowledge, exactly where you're looking</h2>
+    <div class="term" role="img" aria-label="Terminal showing semkeep define and search commands">
+      <div class="term-bar"><i></i><i></i><i></i></div>
+      <div class="term-body">
+<span class="c"># who defines this — and what do I know about it?</span>
+<span class="u">define</span> <span class="p">validateToolInput</span>
+server/mcp.js:166  <span class="m">method validateToolInput</span>
+    async validateToolInput(tool, args, toolName) { …
+<span class="c">Notes:</span>
+  • <span class="p">throws InvalidParams before the handler runs (n_7cc4)</span>
+
+<span class="c"># find it by intent, not by name</span>
+<span class="u">search</span> <span class="p">"how do we avoid storing the same note twice"</span>
+store.ts:218‑233  <span class="m">addNote(…)</span>   <span class="c">(score 0.53)</span>
+
+<span class="c"># who calls it?</span>
+<span class="u">callers</span> <span class="p">backoffScheduler</span>
+client/streamableHttp.js:125
+client/streamableHttp.js:249
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="compare">
+  <div class="wrap">
+    <div class="kicker">Honest positioning</div>
+    <h2>A complement to grep — not a replacement</h2>
+    <p class="section-lede">We benchmarked it instead of hand‑waving. semkeep wins exactly where grep struggles, and we say so where it doesn't.</p>
+    <div class="compare">
+      <div class="col">
+        <h4>Reach for grep when…</h4>
+        <ul>
+          <li>You know the exact string or regex</li>
+          <li>You want every literal occurrence</li>
+          <li>The term is rare and specific</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h4>Reach for semkeep when…</h4>
+        <ul>
+          <li>You don't know the identifier the code uses</li>
+          <li>The obvious keyword is everywhere (1,000+ hits)</li>
+          <li>You need relationships: definition, callers, imports</li>
+          <li>You want your own notes surfaced alongside the code</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install" class="install">
+  <div class="wrap">
+    <div class="kicker">Install</div>
+    <h2>Running in under a minute</h2>
+    <ol>
+      <li>
+        <h3>As an MCP server (any MCP client)</h3>
+        <pre>claude mcp add semkeep -- npx -y semkeep</pre>
+        <p>Restart your client so the <span class="mono">semkeep</span> tools load. Requires Node.js 18+.</p>
+      </li>
+      <li>
+        <h3>…or as a Claude Code plugin</h3>
+        <pre>/plugin marketplace add &lt;your-github&gt;/semkeep
+/plugin install semkeep@semkeep</pre>
+        <p>Bundles the MCP server <em>and</em> a smart Grep nudge in one install.</p>
+      </li>
+      <li>
+        <h3>Index, then ask</h3>
+        <pre>index_path  ./src
+search      "where is the websocket reconnect logic"</pre>
+        <p>Embeddings auto‑detect: API key → local Ollama → on‑device model → lexical fallback. It always works offline, and your code never leaves your machine.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <div class="kicker">FAQ</div>
+    <h2>Questions, answered</h2>
+    <p class="section-lede">An AI agent on this page can query these directly — see <a href="#webmcp" class="gold">WebMCP</a> below.</p>
+    <div id="faq-list"></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="tip">
+      <div class="coin">🪙</div>
+      <h2>Free forever. Tips keep it going.</h2>
+      <p class="section-lede" style="margin:0 auto 22px">semkeep is MIT‑licensed and always free. If it earns its keep, drop a coin in the jar — it funds maintenance and the next tool like this one.</p>
+      <a class="btn btn-gold" href="https://venmo.com/insertcoin" rel="noopener">Insert a coin · Venmo @insertcoin</a>
+    </div>
+  </div>
+</section>
+
+<section id="webmcp" style="padding-bottom:20px">
+  <div class="wrap">
+    <div class="kicker">For agents</div>
+    <h2>This page speaks MCP, too</h2>
+    <p class="section-lede">Fittingly, the site for an MCP server <em>is</em> one. If your browser supports WebMCP, an AI agent can call <span class="mono gold">semkeep_faq</span> to answer questions about the project straight from this page — no scraping required.</p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap foot-in">
+    <div>© 2026 semkeep · MIT licensed · <span class="mono">semkeep.com</span></div>
+    <div>
+      <a href="https://www.npmjs.com/package/semkeep" rel="noopener">npm</a> ·
+      <a href="#faq">FAQ</a> ·
+      <a href="https://venmo.com/insertcoin" rel="noopener">Tip jar</a> ·
+      built with Claude Code
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast">copied ✓</div>
+
+<script>
+// ---- FAQ: render from the FAQPage JSON-LD (single source of truth) ----
+const faq = JSON.parse(document.getElementById('faq-jsonld').textContent).mainEntity
+  .map(q => ({ q: q.name, a: q.acceptedAnswer.text }));
+document.getElementById('faq-list').innerHTML = faq.map(f => `
+  <details>
+    <summary>${f.q}<span class="plus mono">+</span></summary>
+    <div class="a">${f.a}</div>
+  </details>`).join('');
+
+// ---- copy buttons ----
+const toast = document.getElementById('toast');
+function flash(){ toast.classList.add('on'); setTimeout(()=>toast.classList.remove('on'), 1300); }
+document.querySelectorAll('.copy').forEach(b =>
+  b.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(b.dataset.copy); flash(); } catch {}
+  }));
+
+// ---- WebMCP: expose the FAQ as a tool for in-browser agents (graceful) ----
+(function(){
+  try {
+    const mc = navigator.modelContext;
+    if (!mc) return; // not supported yet — degrade silently
+    const answer = (question) => {
+      const ql = String(question || '').toLowerCase();
+      const score = f => f.q.toLowerCase().split(/\W+/).filter(w => w.length>3 && ql.includes(w)).length
+        + (ql.includes('grep') && /grep/i.test(f.q) ? 2 : 0);
+      const best = faq.map(f => ({ f, s: score(f) })).sort((a,b)=>b.s-a.s)[0];
+      return best && best.s > 0 ? `${best.f.q}\n\n${best.f.a}` :
+        "Ask about: what semkeep is, how it differs from grep, privacy, API key, languages, freshness, MCP, pricing, or install.";
+    };
+    const tool = {
+      name: "semkeep_faq",
+      description: "Answer a question about semkeep (a local MCP server for semantic + structural code search) from its official FAQ.",
+      inputSchema: { type: "object", properties: { question: { type: "string", description: "The question about semkeep" } }, required: ["question"] },
+      execute: async ({ question }) => ({ content: [{ type: "text", text: answer(question) }] })
+    };
+    if (typeof mc.registerTool === 'function') mc.registerTool(tool);
+    else if (typeof mc.provideContext === 'function') mc.provideContext({ tools: [tool] });
+  } catch (_) { /* never break the page */ }
+})();
+</script>
+</body>
+</html>

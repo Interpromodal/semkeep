@@ -1,8 +1,15 @@
 # semkeep
 
-A local, offline-capable [MCP](https://modelcontextprotocol.io) server that gives an AI agent **semantic (meaning-based) search over your code and local docs**, plus a thin durable **notes** scratchpad.
+A local, offline-capable [MCP](https://modelcontextprotocol.io) server that gives an AI coding agent **semantic + structural intelligence** about your codebase — plus durable notes anchored to your code. Site: **[semkeep.com](https://semkeep.com)**.
 
-Built-in `Grep`/`Glob` are *lexical* — they only match exact strings. semkeep lets the agent find things by **intent**: ask "where's the retry logic?" and get the file that defines `backoffScheduler`, even though none of those words match literally.
+Built-in `Grep`/`Glob` are *lexical* — they only match exact strings. semkeep adds the four things agents are missing:
+
+- **Find by meaning** — ask "where's the retry logic?" and get the function that defines `backoffScheduler`, even though none of those words appear.
+- **Understand structure** — `define`, `callers`, `outline`, `imports` over real tree-sitter ASTs.
+- **Stay fresh** — the index auto-updates on query as you edit/add/delete files. No manual re-index.
+- **Notes that live with code** — anchor a note to a symbol; it surfaces whenever you `define`/`outline` that code.
+
+Runs on your machine. No API key required.
 
 > **Why not MemPalace?** [MemPalace](https://github.com/mempalace/mempalace) is excellent at *conversational* memory (remembering your chats). semkeep is the complement: it understands your *codebase*. They don't overlap.
 
@@ -10,12 +17,19 @@ Built-in `Grep`/`Glob` are *lexical* — they only match exact strings. semkeep 
 
 | Tool | Purpose |
 |---|---|
-| `index_path` | Index a folder or file (chunked + embedded). Skips unchanged files. |
-| `search` | Meaning-based search over indexed code → ranked `file:line` hits. Scope with `pathPrefix`/`ext`. |
-| `remember` | Store a durable note (semantic dedup avoids near-duplicates). |
+| `index_path` | Index a folder/file (parsed, symbol-aware chunked, embedded). Skips unchanged. |
+| `search` | Meaning-based search → ranked `file:line` hits. Scope with `pathPrefix`/`ext`. |
+| `define` | Where a symbol is defined: `file:line`, kind, signature. |
+| `callers` | Who references a symbol (identifier-aware call sites, import-ranked). |
+| `outline` | The symbols defined in a file/dir, with line ranges. |
+| `imports` | What a file imports, and which files import it. |
+| `remember` | Store a durable note — optionally anchored to a `symbol`/`file`. |
 | `recall` | Find stored notes by meaning. |
 | `forget` | Delete a note by id. |
-| `status` | Active embedding backend, index stats, and a usage protocol. |
+| `refresh` | Force the index to re-scan its roots (index new/changed, prune deleted). |
+| `status` | Embedding backend, index/structure stats, roots, and a usage protocol. |
+
+The five code/structure tools (`search`, `define`, `callers`, `outline`, `imports`) **auto-freshen** before answering — edit your code and just query; the index updates itself.
 
 ## Never hard-fails: tiered embeddings
 
@@ -43,13 +57,26 @@ npm test           # vitest (forces the lexical embedder; no network/model neede
 node scripts/smoke-stdio.mjs   # end-to-end MCP stdio smoke
 ```
 
-## Register with Claude Code
+## Install
 
+**As an MCP server (any MCP client):**
 ```bash
-claude mcp add -s user semkeep -- node /absolute/path/to/dist/server.js
-# remove later with:  claude mcp remove -s user semkeep
+claude mcp add -s user semkeep -- npx -y semkeep
 ```
-Restart Claude Code so the `semkeep` tools load. (`-s user` makes it available in every project; use `-s local` for just one.)
+
+**…or as a Claude Code plugin** (bundles the server + the Grep nudge hook in one install):
+```bash
+/plugin marketplace add <your-github>/semkeep
+/plugin install semkeep@semkeep
+```
+
+**…or from source:**
+```bash
+npm install && npm run build
+claude mcp add -s user semkeep -- node /absolute/path/to/dist/server.js
+```
+
+Restart Claude Code so the `semkeep` tools load. Requires Node.js 18+. (`-s user` = every project; `-s local` = just this one. Remove with `claude mcp remove -s user semkeep`.)
 
 ## Companion: auto-nudge from Grep → search
 
@@ -81,12 +108,14 @@ Open `/hooks` once (or restart) to activate. To disable, delete that block or ma
 | `OLLAMA_HOST` | Ollama base URL (default `http://localhost:11434`) |
 | `SEMKEEP_EMBEDDER` | Force a backend: `lexical` \| `openai` \| `voyage` \| `ollama` \| `local` |
 | `SEMKEEP_MODEL` | Override the model name for the chosen backend |
+| `SEMKEEP_AUTO_REFRESH` | Set `0` to disable auto-freshen-on-query (default on) |
+| `SEMKEEP_REFRESH_DEBOUNCE_MS` | Min ms between freshness scans (default 1500) |
 
 ## Usage tips (the `status` protocol)
 
 - Prefer `search` when you **don't know the exact identifier**; use `Grep` for exact strings.
 - **Scope to sharpen**: `pathPrefix` / `ext` narrow the corpus, which improves accuracy more than any ranking tweak.
-- Re-run `index_path` after big changes (unchanged files are skipped automatically).
+- **Freshness is automatic** — after you edit/add/delete files, the index updates itself on the next query (`SEMKEEP_AUTO_REFRESH=0` disables it; `refresh` forces it).
 - If you switch embedding backends, the store rebuilds itself on next start — notes are re-embedded, the code index is cleared for a fresh `index_path`.
 
 ## How it works
@@ -94,6 +123,10 @@ Open `/hooks` once (or restart) to activate. To disable, delete that block or ma
 Files are split into overlapping, line-aware chunks; each chunk is embedded into an L2-normalized vector and stored in a plain JSON file. Search embeds the query and ranks chunks by dot product (= cosine), with an optional keyword boost in `hybrid` mode. Brute-force is plenty fast for the thousands-of-chunks scale of a single project.
 
 Architecture: `src/embeddings/*` (providers + detection), `src/store.ts` (storage + ranking), `src/chunker.ts` (walk + chunk), `src/indexer.ts`, `src/search.ts`, `src/tools.ts` (handlers), `src/server.ts` (MCP wiring). See `docs/superpowers/` for the design spec and implementation plan.
+
+## Support
+
+semkeep is free and MIT-licensed. If it saves you time, you can drop a coin in the jar to fund maintenance and the next tool like this one: **[Venmo @insertcoin](https://venmo.com/insertcoin)**. 🙏
 
 ## License
 

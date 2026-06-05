@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" font-family="ui-sans-serif,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <defs>
+    <radialGradient id="g" cx="82%" cy="-5%" r="75%">
+      <stop offset="0%" stop-color="#f5b73f" stop-opacity="0.16"/>
+      <stop offset="60%" stop-color="#0b0d10" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#0b0d10"/>
+  <rect width="1200" height="630" fill="url(#g)"/>
+  <g transform="translate(80,84)">
+    <rect x="0" y="6" width="26" height="26" rx="7" fill="#f5b73f"/>
+    <text x="42" y="28" fill="#e8edf4" font-size="30" font-weight="700" letter-spacing="-0.5">semkeep</text>
+    <text x="0" y="170" fill="#e8edf4" font-size="74" font-weight="800" letter-spacing="-2">grep finds strings.</text>
+    <text x="0" y="258" fill="#f5b73f" font-size="74" font-weight="800" letter-spacing="-2">semkeep finds meaning.</text>
+    <text x="0" y="338" fill="#9aa7ba" font-size="29" font-weight="400">Semantic + structural code intelligence for AI agents.</text>
+    <text x="0" y="378" fill="#9aa7ba" font-size="29" font-weight="400">Local. Offline‑capable. No API key.</text>
+    <g transform="translate(0,432)" font-family="ui-monospace,SF Mono,Menlo,Consolas,monospace">
+      <rect x="0" y="0" width="640" height="58" rx="12" fill="#0e1218" stroke="#222a36"/>
+      <text x="22" y="37" fill="#7ee2b8" font-size="22">$</text>
+      <text x="46" y="37" fill="#e8edf4" font-size="22">claude mcp add semkeep -- npx -y semkeep</text>
+    </g>
+    <text x="0" y="500" fill="#6b788c" font-size="22" font-family="ui-monospace,Menlo,Consolas,monospace" dy="42">MCP server · open source · MIT · semkeep.com</text>
+  </g>
+</svg>
