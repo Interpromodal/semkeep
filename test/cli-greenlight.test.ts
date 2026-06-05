@@ -32,12 +32,12 @@ describe("runGreenlightCli – init", () => {
     expect(process.exitCode).toBeUndefined(); // no error
   });
 
-  it("refuses to overwrite an existing file and sets exitCode 2", async () => {
+  it("refuses to overwrite an existing file and sets exitCode 1", async () => {
     const dir = tempDir();
     const path = join(dir, "greenlight.json");
     writeFileSync(path, '{"existing":true}');
     await runGreenlightCli(["init", path]);
-    expect(process.exitCode).toBe(2);
+    expect(process.exitCode).toBe(1);
     // original file unchanged
     expect(JSON.parse(readFileSync(path, "utf8"))).toHaveProperty("existing");
   });

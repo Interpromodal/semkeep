@@ -31,22 +31,16 @@ export function loadConfig(
     env.SEMKEEP_EMBEDDER === "openai" ||
     env.SEMKEEP_EMBEDDER === "voyage";
 
-  let credentialSource: SemkeepConfig["credentialSource"] = "none";
-  let openaiKey: string | undefined;
-  let voyageKey: string | undefined;
+  const openaiKey = env.SEMKEEP_OPENAI_API_KEY ?? fileCfg.openaiKey ?? (inheritEnv ? env.OPENAI_API_KEY : undefined);
+  const voyageKey = env.SEMKEEP_VOYAGE_API_KEY ?? fileCfg.voyageKey ?? (inheritEnv ? env.VOYAGE_API_KEY : undefined);
 
+  let credentialSource: SemkeepConfig["credentialSource"] = "none";
   if (env.SEMKEEP_OPENAI_API_KEY || env.SEMKEEP_VOYAGE_API_KEY) {
     credentialSource = "scoped-env";
-    openaiKey = env.SEMKEEP_OPENAI_API_KEY;
-    voyageKey = env.SEMKEEP_VOYAGE_API_KEY;
   } else if (fileCfg.openaiKey || fileCfg.voyageKey) {
     credentialSource = "config-file";
-    openaiKey = fileCfg.openaiKey;
-    voyageKey = fileCfg.voyageKey;
   } else if (inheritEnv && (env.OPENAI_API_KEY || env.VOYAGE_API_KEY)) {
     credentialSource = "inherited-env";
-    openaiKey = env.OPENAI_API_KEY;
-    voyageKey = env.VOYAGE_API_KEY;
   }
 
   return {

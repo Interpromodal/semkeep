@@ -22,7 +22,7 @@ export async function runGreenlightCli(argv: string[]): Promise<void> {
     const path = rest[0] ?? "greenlight.json";
     if (existsSync(path)) {
       console.error(`refusing to overwrite ${path}`);
-      process.exitCode = 2;
+      process.exitCode = 1;
       return;
     }
     writeFileSync(path, JSON.stringify(STARTER, null, 2) + "\n");
@@ -62,8 +62,8 @@ export async function runGreenlightCli(argv: string[]): Promise<void> {
         : undefined;
     const report = runSpec(spec, { only });
     console.log(json ? JSON.stringify(renderJson(report), null, 2) : renderHuman(report));
-    if (strict && lintSpec(spec).length) process.exitCode = 1;
-    else process.exitCode = report.green ? 0 : 1;
+    process.exitCode = report.green ? 0 : 1;
+    if (strict && process.exitCode === 0 && lintSpec(spec).length) process.exitCode = 1;
     return;
   }
   console.error(`unknown greenlight subcommand "${sub}"`);
