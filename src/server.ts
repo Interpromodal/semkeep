@@ -13,12 +13,15 @@ import {
   forgetTool,
   importsTool,
   indexPathTool,
+  markTool,
+  markersTool,
   outlineTool,
   recallTool,
   refreshTool,
   rememberTool,
   searchTool,
   statusTool,
+  unmarkTool,
 } from "./tools.js";
 
 // Lazily build the context on first tool call: detect the embedder, load the
@@ -109,6 +112,52 @@ server.registerTool(
     inputSchema: { id: z.string().describe("Note id, e.g. n_1a2b3c4d5e") },
   },
   async (args) => text(await forgetTool(await getContext(), args)),
+);
+
+server.registerTool(
+  "mark",
+  {
+    description:
+      "Record a typed, per-project operational marker: a verified recipe (command+exitCode), a gotcha, a dead-end, or a note. Upserts by (kind, title). Recipes with exitCode 0 are stamped verified.",
+    inputSchema: {
+      kind: z.enum(["recipe", "gotcha", "deadend", "note"]).describe("Marker kind"),
+      title: z.string().describe("Short title; upsert key together with kind"),
+      project: z.string().optional().describe("Project path (default: resolved cwd)"),
+      body: z.string().optional().describe("Resolution / explanation / why-it-failed"),
+      command: z.string().optional().describe("The exact command (recipes)"),
+      cwd: z.string().optional().describe("Directory the command runs in"),
+      exitCode: z.number().int().optional().describe("Observed exit code (0 verifies a recipe)"),
+      tags: z.array(z.string()).optional().describe("Optional tags"),
+    },
+  },
+  async (args) => text(await markTool(args)),
+);
+
+server.registerTool(
+  "markers",
+  {
+    description:
+      "Recall this project's operational markers (recipes/gotchas/dead-ends/notes), grouped and STALE-flagged. Filter by kind or a substring query.",
+    inputSchema: {
+      project: z.string().optional().describe("Project path (default: resolved cwd)"),
+      query: z.string().optional().describe("Substring filter over title/body/command/tags"),
+      kind: z.enum(["recipe", "gotcha", "deadend", "note"]).optional().describe("Restrict to one kind"),
+      includeStale: z.boolean().optional().describe("Include stale recipes (default true)"),
+    },
+  },
+  async (args) => text(await markersTool(args)),
+);
+
+server.registerTool(
+  "unmark",
+  {
+    description: "Delete an operational marker by id.",
+    inputSchema: {
+      id: z.string().describe("Marker id, e.g. rcp_a1b2c3"),
+      project: z.string().optional().describe("Project path (default: resolved cwd)"),
+    },
+  },
+  async (args) => text(await unmarkTool(args)),
 );
 
 server.registerTool(

@@ -5,6 +5,10 @@ import { Store } from "./store.js";
 import { indexPath } from "./indexer.js";
 import { search } from "./search.js";
 import { freshen } from "./freshen.js";
+import { OperationalStore, type MarkInput, type RecallFilter } from "./operational/store.js";
+import { resolveProject, defaultOpsStorePath } from "./operational/paths.js";
+import { formatMarkers, formatMark } from "./operational/format.js";
+import type { MarkerKind } from "./operational/types.js";
 
 export interface Context {
   store: Store;
@@ -155,6 +159,33 @@ export async function forgetTool(ctx: Context, args: { id: string }): Promise<st
   const ok = ctx.store.deleteNote(args.id);
   if (ok) await ctx.store.save();
   return ok ? `Forgot ${args.id}.` : `No note with id ${args.id}.`;
+}
+
+function opsStore(): OperationalStore {
+  return new OperationalStore(defaultOpsStorePath());
+}
+
+export async function markTool(
+  args: { kind: MarkerKind; title: string; project?: string } & Omit<MarkInput, "kind" | "title">,
+): Promise<string> {
+  const project = resolveProject(args.project);
+  const { kind, title, body, command, cwd, exitCode, tags } = args;
+  const r = opsStore().mark(project, { kind, title, body, command, cwd, exitCode, tags });
+  return formatMark(project, r);
+}
+
+export async function markersTool(
+  args: { project?: string; query?: string; kind?: MarkerKind; includeStale?: boolean },
+): Promise<string> {
+  const project = resolveProject(args.project);
+  const filter: RecallFilter = { query: args.query, kind: args.kind, includeStale: args.includeStale };
+  return formatMarkers(project, opsStore().recall(project, filter));
+}
+
+export async function unmarkTool(args: { id: string; project?: string }): Promise<string> {
+  const project = resolveProject(args.project);
+  const ok = opsStore().forget(project, args.id);
+  return ok ? `Forgot marker ${args.id} for ${project}.` : `No marker ${args.id} found for ${project}.`;
 }
 
 export function statusTool(ctx: Context): string {
