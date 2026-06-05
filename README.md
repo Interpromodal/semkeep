@@ -130,8 +130,8 @@ At the start of each session the `markers --hook` output surfaces verified recip
 // Mark a verified build command (exitCode 0 stamps it verified; stale after 30 days)
 { "kind": "recipe", "title": "run tests", "command": "npm test", "cwd": "/my/project", "exitCode": 0 }
 
-// Mark a gotcha
-{ "kind": "gotcha", "title": "vitest config", "problem": "vite.config.ts not picked up", "resolution": "rename to vitest.config.ts" }
+// Mark a gotcha (title = the problem, body = the resolution)
+{ "kind": "gotcha", "title": "vitest config not picked up", "body": "vite.config.ts is ignored — rename it to vitest.config.ts" }
 ```
 
 Kinds: `recipe` | `gotcha` | `deadend` | `note`. Upserts by (kind, title).
@@ -144,9 +144,10 @@ A **greenlight gate** is a JSON spec (`greenlight.json` at repo root by conventi
 // greenlight.json — minimal project gate
 {
   "checks": [
-    { "id": "build",  "run": "npm run build", "expect": { "exitCode": 0 } },
-    { "id": "tests",  "run": "npm test",       "expect": { "exitCode": 0 } },
-    { "id": "types",  "run": "npx tsc --noEmit","expect": { "exitCode": 0 } }
+    { "name": "build", "run": "npm run build",
+      "assert": [{ "type": "exit_code", "equals": 0 }, { "type": "file_exists", "path": "dist/cli.js" }] },
+    { "name": "tests", "run": "npm test",
+      "assert": [{ "type": "exit_code", "equals": 0 }, { "type": "stdout_contains", "value": "passed" }] }
   ]
 }
 ```
@@ -161,8 +162,8 @@ A **greenlight gate** is a JSON spec (`greenlight.json` at repo root by conventi
 |---|---|---|
 | `semkeep markers --hook` | SessionStart hook | Print this project's operational markers at session start |
 | `semkeep nudge --hook` | PreCompact hook | Emit a reminder to preserve key context before compaction |
-| `semkeep greenlight run [--spec <path>]` | CLI / CI | Run the greenlight gate (defaults to `./greenlight.json`) |
-| `semkeep greenlight lint [--spec <path>]` | CLI | Lint the gate spec for shallow checks |
+| `semkeep greenlight run <spec.json>` | CLI / CI | Run the gate (exit `0`=GREEN, `1`=NOT GREEN, `2`=spec error) |
+| `semkeep greenlight lint <spec.json>` | CLI | Lint the gate spec for shallow checks |
 | `semkeep greenlight init` | CLI | Scaffold a starter `greenlight.json` in the current directory |
 | `semkeep import-cairn` | One-time migration | Import markers from a cairn store into the semkeep operational store |
 
