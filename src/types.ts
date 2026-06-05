@@ -60,6 +60,12 @@ export interface Reference {
   line: number; // 1-based
 }
 
+/** Optional link from a note to code (name-based, survives edits). */
+export interface NoteAnchor {
+  symbol?: string; // a symbol name
+  file?: string; // absolute path scope (optional)
+}
+
 /** A durable working note written by the agent. */
 export interface Note {
   id: string; // `n_<sha1[0..10]>`
@@ -67,6 +73,7 @@ export interface Note {
   tags: string[];
   vector: number[]; // L2-normalized
   createdAt: number; // Date.now()
+  anchor?: NoteAnchor;
 }
 
 /** On-disk store shape. */

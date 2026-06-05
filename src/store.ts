@@ -8,6 +8,7 @@ import type {
   ImportEdge,
   IndexRoot,
   Note,
+  NoteAnchor,
   Reference,
   SearchHit,
   StoreData,
@@ -257,15 +258,19 @@ export class Store {
     text: string,
     tags: string[],
     vector: number[] | Float32Array,
+    anchor?: NoteAnchor,
     dedupThreshold = DEFAULT_DEDUP_THRESHOLD,
   ): { id: string; deduped: boolean } {
     const vec = Array.from(vector);
     for (const n of this.data.notes) {
-      if (dot(vec, n.vector) > dedupThreshold) return { id: n.id, deduped: true };
+      if (dot(vec, n.vector) > dedupThreshold) {
+        if (anchor) n.anchor = anchor; // re-anchor an existing note
+        return { id: n.id, deduped: true };
+      }
     }
     const id = "n_" + sha1(text).slice(0, 10);
     if (!this.data.notes.some((n) => n.id === id)) {
-      this.data.notes.push({ id, text, tags, vector: vec, createdAt: Date.now() });
+      this.data.notes.push({ id, text, tags, vector: vec, createdAt: Date.now(), anchor });
     }
     return { id, deduped: false };
   }
@@ -273,11 +278,25 @@ export class Store {
   searchNotes(
     q: number[] | Float32Array,
     k: number,
-  ): Array<{ id: string; text: string; tags: string[]; score: number }> {
+  ): Array<{ id: string; text: string; tags: string[]; score: number; anchor?: NoteAnchor }> {
     return this.data.notes
-      .map((n) => ({ id: n.id, text: n.text, tags: n.tags, score: dot(q, n.vector) }))
+      .map((n) => ({ id: n.id, text: n.text, tags: n.tags, score: dot(q, n.vector), anchor: n.anchor }))
       .sort((a, b) => b.score - a.score)
       .slice(0, k);
+  }
+
+  /** Notes anchored to a symbol name. */
+  notesForSymbol(name: string): Note[] {
+    return this.data.notes.filter((n) => n.anchor?.symbol === name);
+  }
+
+  /** Notes anchored to a file, or to any of the given symbols defined in it. */
+  notesForFile(file: string, symbolNames: string[]): Note[] {
+    return this.data.notes.filter(
+      (n) =>
+        n.anchor?.file === file ||
+        (n.anchor?.symbol !== undefined && symbolNames.includes(n.anchor.symbol)),
+    );
   }
 
   deleteNote(id: string): boolean {
