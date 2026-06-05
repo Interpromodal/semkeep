@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -254,13 +253,8 @@ server.registerTool(
   async () => text(await refreshTool(await getContext())),
 );
 
-async function main() {
+export async function serve(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("[semkeep] MCP server ready on stdio");
 }
-
-main().catch((e) => {
-  console.error("[semkeep] fatal:", e);
-  process.exit(1);
-});
