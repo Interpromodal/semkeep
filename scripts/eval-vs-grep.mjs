@@ -27,6 +27,10 @@ const QUERIES = [
   { q: "cancel an in-flight request that is still pending", grep: "cancel" },
   { q: "reconnect with exponential backoff after the connection drops", grep: "backoff" },
   { q: "enforce a maximum message size or rate limit on outgoing notifications", grep: "rate" },
+  { q: "register a handler for a specific request method", grep: "RequestHandler" },
+  { q: "serialize a message before sending it over the transport", grep: "serialize" },
+  { q: "check that the negotiated protocol version is supported", grep: "protocolVersion" },
+  { q: "close the transport connection and clean up resources", grep: "close" },
 ];
 
 const config = loadConfig();

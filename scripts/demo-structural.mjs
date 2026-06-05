@@ -22,10 +22,10 @@ console.log(`Indexed ${r.filesIndexed} files / ${r.symbolsAdded} symbols / ${r.c
 const rel = (s) => s.replaceAll(CORPUS, ".").replaceAll("\\", "/");
 
 console.log("Q: where is validateToolInput defined?");
-console.log("→ define:\n" + rel(defineTool(ctx, { name: "validateToolInput" })) + "\n");
+console.log("→ define:\n" + rel(await defineTool(ctx, { name: "validateToolInput" })) + "\n");
 
 console.log("Q: who calls validateToolInput?");
-console.log("→ callers:\n" + rel(callersTool(ctx, { name: "validateToolInput" })) + "\n");
+console.log("→ callers:\n" + rel(await callersTool(ctx, { name: "validateToolInput" })) + "\n");
 
 console.log("Q: what does server/mcp.js import?");
-console.log("→ imports (out, first 6):\n" + rel(importsTool(ctx, { path: join(CORPUS, "server", "mcp.js"), direction: "out" })).split("\n").slice(0, 7).join("\n"));
+console.log("→ imports (out, first 6):\n" + rel(await importsTool(ctx, { path: join(CORPUS, "server", "mcp.js"), direction: "out" })).split("\n").slice(0, 7).join("\n"));

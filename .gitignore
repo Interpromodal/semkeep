@@ -19,3 +19,8 @@ Thumbs.db
 
 # Local Claude Code config (e.g. preview launch.json)
 .claude/
+
+.vercel
+
+# Local launch/article assets (published to Substack; kept out of the public repo)
+docs/launch/
