@@ -64,3 +64,17 @@ test("indexing extracts symbols queryable via the store", async () => {
   expect(def[0].kind).toBe("function");
   expect(store.outline(def[0].file).map((s) => s.name)).toContain("Scheduler");
 });
+
+test("indexPath records the root and per-file stat signatures", async () => {
+  const { resolve } = await import("node:path");
+  const d = mkdtempSync(join(tmpdir(), "mp-roots-"));
+  writeFileSync(join(d, "x.ts"), "export const a = 1\n");
+  const store = await Store.load(mkdtempSync(join(tmpdir(), "mp-roots-data-")));
+  const emb = new LexicalEmbedder(128);
+  store.setEmbedderMeta(emb.name, emb.dim);
+  await indexPath(store, emb, d);
+  expect(store.roots().map((r) => r.path)).toContain(resolve(d));
+  const stat = store.fileStat(join(resolve(d), "x.ts"));
+  expect(stat).toBeDefined();
+  expect(stat!.size).toBeGreaterThan(0);
+});
