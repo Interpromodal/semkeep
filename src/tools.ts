@@ -21,7 +21,9 @@ const PROTOCOL =
   "Prefer `search` for meaning-based code lookup (you don't need the exact identifier); " +
   "scope with pathPrefix/ext to sharpen results; use Grep only for exact strings. " +
   "For structural questions use define (where is X defined), outline (what's in this file), " +
-  "callers (who calls X), imports (dependency edges). Use remember/recall for durable notes.";
+  "callers (who calls X), imports (dependency edges). " +
+  "Use remember/recall for durable semantic notes; use mark/markers for verified " +
+  "operational memory (recipes/gotchas/dead-ends, per project); use greenlight_run to prove a task is done.";
 
 // Debounced auto-freshen state, per server process.
 let lastFreshenAt = 0;
@@ -193,12 +195,15 @@ export function statusTool(ctx: Context): string {
   const degradedNote = ctx.degraded
     ? " — DEGRADED lexical fallback; add OPENAI_API_KEY/VOYAGE_API_KEY, run Ollama, or install @huggingface/transformers for true semantic search"
     : "";
+  const ops = new OperationalStore(defaultOpsStorePath());
+  const opsCount = ops.recall(resolveProject(), { includeStale: true }).length;
   return [
     `embedder: ${s.embedder || ctx.embedder.name} (dim ${s.dim || ctx.embedder.dim})${degradedNote}`,
     `indexed: ${s.fileCount} files, ${s.chunkCount} chunks`,
     `structure: ${s.symbolCount} symbols, ${s.importCount} imports`,
     `roots: ${ctx.store.roots().length} (auto-refresh ${ctx.config.autoRefresh ? "on" : "off"})`,
     `notes: ${s.noteCount}`,
+    `operational: ${opsCount} marker(s) for this project — ${defaultOpsStorePath()}`,
     `dataDir: ${ctx.config.dataDir}`,
     `protocol: ${PROTOCOL}`,
   ].join("\n");
